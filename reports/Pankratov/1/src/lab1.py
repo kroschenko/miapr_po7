@@ -36,7 +36,7 @@ def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[
                 ideal_output = training_outputs[i + nn_inputs]
                 w[j] -= TRAINING_SPEED * (output - ideal_output) * training_outputs[i + j]
 
-            # Обноавление порого нейронной сети, формула(1.8)
+            # Обновление порога нейронной сети, формула(1.8)
             T += TRAINING_SPEED * (output - training_outputs[i + nn_inputs])
 
             # Обновление среднеквадратичной ошибки нейронной сети, формула(1.3)
@@ -50,7 +50,7 @@ def main():
     nn_inputs = 5  # Количество входных значений(входов)
 
     training_epoch, testing_epoch = 30, 15  # Количество значений функции для обучения и прогнозирования
-    step = 0.1  # Шах табуляции функции
+    step = 0.1  # Шаг табуляции функции
 
     training_outputs = [func(i * step, a, b, d) for i in range(training_epoch)]
     testing_outputs = [func(i * step, a, b, d) for i in range(training_epoch, training_epoch + testing_epoch)]
