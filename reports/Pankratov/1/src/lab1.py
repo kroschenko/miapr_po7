@@ -32,7 +32,7 @@ def calculate_output(
 def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[float]) -> TrainingResult:
     w = [random.uniform(0, 1) for _ in range(nn_inputs)]  # Веса
     T = random.uniform(0.5, 1)  # Порог
-    data_for_drawing = ([], [])
+    data_for_drawing = ([], [])  # Данные для рисования графика
 
     error = 1
     iteration = 0
@@ -53,7 +53,9 @@ def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[
             T += TRAINING_SPEED * (output - training_outputs[i + nn_inputs])
 
             # Обновление среднеквадратичной ошибки нейронной сети, формула(1.3)
-            error += 0.5 * ((output - training_outputs[i + nn_inputs]) ** 2)
+            error += (output - training_outputs[i + nn_inputs]) ** 2
+
+        error /= training_epoch - nn_inputs
 
         data_for_drawing[0].append(iteration)
         data_for_drawing[1].append(error)
