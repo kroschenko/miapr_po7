@@ -5,7 +5,7 @@ from typing import List
 # Гиперпараметры обучения
 MIN_SQUARE_ERROR = 1e-25  # Минимальная ошибка для остановки обучения
 TRAINING_SPEED = 1.0e-1  # Скорость обучения нейронной сети
-TRAINING_EPOCH_AMOUNT = 300  # Количество значений функции (эпох) для обучения
+TRAINING_EPOCH_AMOUNT = 30  # Количество значений функции (эпох) для обучения
 TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
 
 
@@ -57,12 +57,12 @@ def main() -> None:
                 T += TRAINING_SPEED * error
 
                 # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
-                square_error += (error ** 2) / 2
+                square_error += (error ** 2)
 
                 # Вывод результатов
                 print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
-                      f'{error:24}  {square_error if error else "       like the previous":24}')
-
+                      f'{error:24}  {square_error/(epoch+1) if error else "       like the previous":24}')
+            square_error /= TRAINING_EPOCH_AMOUNT
         print('\nНейронная сеть обучена, результаты:')
         print(f'w: {w}\n'
               f'T: {T}\n')
@@ -81,11 +81,11 @@ def main() -> None:
             error: float = output - ideal_output  # Отклонение от функции
 
             # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
-            square_error += (error ** 2) / 2
+            square_error += (error ** 2)
 
             # Вывод результатов
             print(f'Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
-                  f'{error:24}  {square_error if error else "       like the previous":24}')
+                  f'{error:24}  {square_error / (epoch + 1) if error else "       like the previous":24}')
 
     except OverflowError:
         print('Слишком большая скорость обучения, выход из программы')
