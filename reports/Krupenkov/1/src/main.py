@@ -3,8 +3,10 @@ from random import uniform
 from typing import List
 
 # Гиперпараметры обучения
-MIN_ERROR = 9.0e-28  # Минимальная ошибка для остановки обучения
-TRAINING_SPEED = 2.0e-1  # Скорость обучения нейронной сети
+MIN_SQUARE_ERROR = 1e-25  # Минимальная ошибка для остановки обучения
+TRAINING_SPEED = 1.0e-1  # Скорость обучения нейронной сети
+TRAINING_EPOCH_AMOUNT = 300  # Количество значений функции (эпох) для обучения
+TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
 
 
 # Функция по условию (Вариант 9)
@@ -16,51 +18,77 @@ def main() -> None:
     inputs_amount = 5  # Количество входов
     step = 0.1  # Шаг табуляции функции
 
-    training_epoch = 30  # Количество значений функции для обучения
-    training_outputs: List[float] = [function(i * step) for i in range(training_epoch + inputs_amount)]
-    # список значений функции для обучения
+    # Значения функции для обучения
+    training_outputs: List[float] = [function(i * step) for i in range(TRAINING_EPOCH_AMOUNT + inputs_amount)]
 
-    # testing_epoch = 15  # Количество значений функции для прогнозирования
-    # testing_outputs: List[float] = [function(i * step) for i in range(training_epoch, training_epoch + testing_epoch)]
-    # список значений функции для прогнозирования
+    # Значения функции для прогнозирования
+    testing_outputs: List[float] = [
+        function(i * step) for i in
+        range(TRAINING_EPOCH_AMOUNT, TRAINING_EPOCH_AMOUNT + TESTING_EPOCH_AMOUNT + inputs_amount)
+    ]
 
-    # Создание списка случайных весов и порога
-    w: List[float] = [uniform(0, 1) for _ in range(inputs_amount)]
-    T: float = uniform(0, 1)
+    w: List[float] = [uniform(0, 1) for _ in range(inputs_amount)]  # Список всех весов
+    T: float = uniform(0, 1)  # Порог
 
-    # Инициализация счетчика и ошибки
-    iteration = 0
-    error = MIN_ERROR
-    while error >= MIN_ERROR:
-        error = 0
-        iteration += 1
+    try:  # Проверка на расходимость
+        iteration = 0  # Счетчик итераций
+        square_error: float = MIN_SQUARE_ERROR  # Среднеквадратичная ошибка
 
-        for epoch in range(training_epoch):
+        # Обучение
+        while square_error >= MIN_SQUARE_ERROR and iteration < 100:
+            square_error = 0
+            iteration += 1
+
+            for epoch in range(TRAINING_EPOCH_AMOUNT):
+                # Вычисление выходного значения (Формула 1.2)
+                output: float = 0
+                for j in range(inputs_amount):
+                    output += w[j] * training_outputs[epoch + j]
+                output -= T
+
+                ideal_output: float = training_outputs[epoch + inputs_amount]  # Истинное значение функции
+                error: float = output - ideal_output  # Отклонение от функции
+
+                # Обновление весов нейронной сети (Формула 1.7)
+                for t in range(inputs_amount):
+                    w[t] -= TRAINING_SPEED * error * training_outputs[epoch + t]
+
+                # Обновление порога нейронной сети (Формула 1.8)
+                T += TRAINING_SPEED * error
+
+                # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
+                square_error += (error ** 2) / 2
+
+                # Вывод результатов
+                print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
+                      f'{error:24}  {square_error if error else "       like the previous":24}')
+
+        print('\nНейронная сеть обучена, результаты:')
+        print(f'w: {w}\n'
+              f'T: {T}\n')
+        print('Тестирование на новом участке:')
+
+        square_error = 0
+        # Тестирование
+        for epoch in range(TESTING_EPOCH_AMOUNT):
             # Вычисление выходного значения (Формула 1.2)
             output: float = 0
             for j in range(inputs_amount):
-                output += w[j] * training_outputs[epoch + j]
+                output += w[j] * testing_outputs[epoch + j]
             output -= T
 
-            # Значение функции
-            ideal_output = training_outputs[epoch + inputs_amount]
-            # Отклонение от функции
-            error_output = output - ideal_output
+            ideal_output: float = testing_outputs[epoch + inputs_amount]  # Истинное значение функции
+            error: float = output - ideal_output  # Отклонение от функции
 
-            # Обновление весов нейронной сети (Формула 1.7)
-            for t in range(inputs_amount):
-                w[t] -= TRAINING_SPEED * error_output * training_outputs[epoch + t]
-
-            # Обновление порога нейронной сети (Формула 1.8)
-            T += TRAINING_SPEED * error_output
-
-            # Обновление среднеквадратичной ошибки нейронной сети( Формула 1.3)
-            error += (error_output ** 2) / 2
+            # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
+            square_error += (error ** 2) / 2
 
             # Вывод результатов
-            print(f'Iteration {iteration + 1}\tEpoch {epoch + 1}:\t{ideal_output}\t{output}\t{error_output}\t{error}')
+            print(f'Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
+                  f'{error:24}  {square_error if error else "       like the previous":24}')
 
-    print('Нейронная сеть обучена')
+    except OverflowError:
+        print('Слишком большая скорость обучения, выход из программы')
 
 
 if __name__ == "__main__":
