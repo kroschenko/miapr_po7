@@ -1,9 +1,19 @@
 import math
 import random
 from typing import Tuple, List, Sequence
+from dataclasses import dataclass
 
-MIN_ERROR = 0.000000000000000000000000001  # Минимальная ошибка для остановки обучения
+import matplotlib.pyplot as plt
+
+MIN_ERROR = 1.0e-27  # Минимальная ошибка для остановки обучени
 TRAINING_SPEED = 0.01  # Скорость обучения нейронной сети
+
+
+@dataclass(frozen=True)
+class TrainingResult:
+    w: List[float]
+    T: float
+    data_for_drawing: Tuple[List[int], List[float]]
 
 
 def func(x: float, a: int, b: int, d: float) -> float:
@@ -19,13 +29,16 @@ def calculate_output(
     return output - t
 
 
-def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[float]) -> Tuple[List[float], float]:
+def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[float]) -> TrainingResult:
     w = [random.uniform(0, 1) for _ in range(nn_inputs)]  # Веса
     T = random.uniform(0.5, 1)  # Порог
+    data_for_drawing = ([], [])
 
     error = 1
+    iteration = 0
     while error > MIN_ERROR:
         error = 0
+        iteration += 1
 
         for i in range(training_epoch - nn_inputs):
             # Получение выходного значения нейронной сети, формула(1.2)
@@ -42,7 +55,10 @@ def training_nn(nn_inputs: int, training_epoch: int, training_outputs: Sequence[
             # Обновление среднеквадратичной ошибки нейронной сети, формула(1.3)
             error += 0.5 * ((output - training_outputs[i + nn_inputs]) ** 2)
 
-    return w, T
+        data_for_drawing[0].append(iteration)
+        data_for_drawing[1].append(error)
+
+    return TrainingResult(w, T, data_for_drawing)
 
 
 def main():
@@ -55,22 +71,27 @@ def main():
     training_outputs = [func(i * step, a, b, d) for i in range(training_epoch)]
     testing_outputs = [func(i * step, a, b, d) for i in range(training_epoch, training_epoch + testing_epoch)]
     try:
-        w, T = training_nn(nn_inputs, training_epoch, training_outputs)
+        training_result = training_nn(nn_inputs, training_epoch, training_outputs)
     except OverflowError:
         return print("Нейронная сеть расходящаеся, скорость обучения слишком большая, уменьшите ее")
 
+    plt.plot(*training_result.data_for_drawing)
+    plt.ylabel('error')
+    plt.xlabel('iteration')
+    plt.show()
+
     print("Training result:")
-    print(f"Weight: {w}, T: {T}")
+    print(f"Weight: {training_result.w}, T: {training_result.T}")
     print("{:<22}{:<23}{}".format("Reference value", "Receive value", "Deviation"))
 
     for i in range(training_epoch - nn_inputs):
-        output = calculate_output(nn_inputs, w, T, training_outputs, i)
+        output = calculate_output(nn_inputs, training_result.w, training_result.T, training_outputs, i)
         print(f"{training_outputs[i+nn_inputs]:<20}  {output: <21}  {(training_outputs[i+nn_inputs] - output)}")
 
     print("\nTesting result:")
 
     for i in range(testing_epoch - nn_inputs):
-        output = calculate_output(nn_inputs, w, T, testing_outputs, i)
+        output = calculate_output(nn_inputs, training_result.w, training_result.T, testing_outputs, i)
         print(f"{testing_outputs[i+nn_inputs]:<20}  {output: <21}  {(testing_outputs[i+nn_inputs] - output)}")
 
 
