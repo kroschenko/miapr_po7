@@ -3,8 +3,7 @@ from random import uniform
 from typing import List
 
 # Гиперпараметры обучения
-MIN_SQUARE_ERROR = 1e-32  # Минимальная ошибка для остановки обучения
-TRAINING_SPEED = 1.0e-1  # Скорость обучения нейронной сети
+MIN_SQUARE_ERROR = 1e-30  # Минимальная ошибка для остановки обучения
 TRAINING_EPOCH_AMOUNT = 30  # Количество значений функции (эпох) для обучения
 TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
 MAX_ITERATIONS_AMOUNT = 20
@@ -37,6 +36,7 @@ def main() -> None:
 
         # Обучение
         while square_error >= MIN_SQUARE_ERROR and iteration < MAX_ITERATIONS_AMOUNT:
+
             square_error_sum = 0
             iteration += 1
 
@@ -50,12 +50,20 @@ def main() -> None:
                 ideal_output: float = training_outputs[epoch + inputs_amount]  # Истинное значение функции
                 error: float = output - ideal_output  # Отклонение от функции
 
+                # Изменение скорости обучение
+                sum_y = 0
+                for t in range(inputs_amount):
+                    sum_y += training_outputs[epoch + t] ** 2
+                # sum_y += sum(training_outputs[epoch:epoch + inputs_amount - 1])
+                training_speed = 1 / (1 + sum_y)
+                # print(training_speed)
+
                 # Обновление весов нейронной сети (Формула 1.7)
                 for t in range(inputs_amount):
-                    w[t] -= TRAINING_SPEED * error * training_outputs[epoch + t]
+                    w[t] -= training_speed * error * training_outputs[epoch + t]
 
                 # Обновление порога нейронной сети (Формула 1.8)
-                T += TRAINING_SPEED * error
+                T += training_speed * error
 
                 # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
                 square_error_sum += error ** 2
