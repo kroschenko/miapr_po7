@@ -1,12 +1,13 @@
 from math import sin
 from random import uniform
-from typing import List
+from typing import List, Tuple
+import matplotlib.pyplot as plt
 
 # Гиперпараметры обучения
 MIN_SQUARE_ERROR = 1e-30  # Минимальная ошибка для остановки обучения
 TRAINING_EPOCH_AMOUNT = 30  # Количество значений функции (эпох) для обучения
 TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
-MAX_ITERATIONS_AMOUNT = 20  # Максимальное количество повторений обучения
+MAX_ITERATIONS_AMOUNT = 18  # Максимальное количество повторений обучения
 
 
 # Функция по условию (Вариант 9)
@@ -26,6 +27,20 @@ def calculate_output(
     return output - T
 
 
+def draw_error_iteration(x_data: List[int], y_data: List[float]) -> None:
+    plt.plot(x_data, y_data)
+    plt.ylabel('error^2')
+    plt.xlabel('frame')
+    plt.show()
+
+
+def draw_sin(x_data: List[float], y_data: List[float]) -> None:
+    plt.plot(x_data, y_data)
+    plt.ylabel('y')
+    plt.xlabel('x')
+    plt.show()
+
+
 def main() -> None:
     inputs_amount = 5  # Количество входов
     step = 0.1  # Шаг табуляции функции
@@ -41,6 +56,8 @@ def main() -> None:
 
     w: List[float] = [uniform(0, 1) for _ in range(inputs_amount)]
     T: float = uniform(0, 1)  # Порог
+    drawing_data_error: Tuple[List[int], List[float]] = ([], [])
+    drawing_data_sin: Tuple[List[float], List[float]] = ([], [])
 
     # __________ Начало __________
     try:
@@ -69,6 +86,11 @@ def main() -> None:
                 # Сумма среднеквадратичных ошибок (Фейк формула 1.3)
                 square_error_sum += error ** 2
 
+                drawing_data_error[0].append(iteration * MAX_ITERATIONS_AMOUNT + epoch)
+                drawing_data_error[1].append(error ** 2)
+                drawing_data_sin[0].append(step * epoch)
+                drawing_data_sin[1].append(output)
+
                 print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
                       f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
@@ -84,17 +106,23 @@ def main() -> None:
 
         # __________ Тестирование __________
         for epoch in range(TESTING_EPOCH_AMOUNT):
-            output = calculate_output(inputs_amount, w, training_outputs, epoch, T)
+            output = calculate_output(inputs_amount, w, testing_outputs, epoch, T)
 
             ideal_output: float = testing_outputs[epoch + inputs_amount]  # Истинное значение функции
             error: float = output - ideal_output  # Отклонение от функции
             square_error_sum += error ** 2  # Суммарная ошибка (Формула 1.3)
+
+            drawing_data_sin[0].append(step * (epoch + TRAINING_EPOCH_AMOUNT))
+            drawing_data_sin[1].append(output)
 
             print(f'Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
                   f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
         square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
         print(f'Testing square error: {square_error}')
+
+        draw_error_iteration(*drawing_data_error)
+        draw_sin(*drawing_data_sin)
 
     except OverflowError:
         print('Слишком большая скорость обучения, выход из программы')
