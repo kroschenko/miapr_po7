@@ -29,7 +29,7 @@ def main() -> None:
     ]
 
     w: List[float] = [uniform(0, 1) for _ in range(inputs_amount)]  # Список всех весов
-    T: float = uniform(0, 1)  # Порог
+    t: float = uniform(0, 1)  # Порог
 
     try:  # Проверка на расходимость
         iteration = 0  # Счетчик итераций
@@ -45,32 +45,34 @@ def main() -> None:
                 output: float = 0
                 for j in range(inputs_amount):
                     output += w[j] * training_outputs[epoch + j]
-                output -= T
+                output -= t
 
                 ideal_output: float = training_outputs[epoch + inputs_amount]  # Истинное значение функции
                 error: float = output - ideal_output  # Отклонение от функции
 
                 # Обновление весов нейронной сети (Формула 1.7)
-                for t in range(inputs_amount):
-                    w[t] -= TRAINING_SPEED * error * training_outputs[epoch + t]
+                for i in range(inputs_amount):
+                    w[i] -= TRAINING_SPEED * error * training_outputs[epoch + i]
 
                 # Обновление порога нейронной сети (Формула 1.8)
-                T += TRAINING_SPEED * error
+                t += TRAINING_SPEED * error
 
                 # Обновление среднеквадратичной ошибки нейронной сети (Формула 1.3)
                 square_error_sum += error ** 2
 
                 # Вывод результатов
-                print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
-                      f'{error:24}  {error ** 2 if error else "            are the same":24}')
+                # print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
+                #       f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
             square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
-            print(f'Iteration {iteration:3}  Square error: {square_error}')
+            # print(f'Iteration {iteration:3}  Square error: {square_error}')
 
         print('\nНейронная сеть обучена, результаты:')
         print(f'w: {w}\n'
-              f'T: {T}\n')
+              f'T: {t}\n')
         print('Тестирование на новом участке:')
+        print('Epoch  N:     Идеальное значение    Полученное значение          '
+              'Локальная ошибка       Квадратичная ошибка   ')
 
         square_error_sum = 0
         # Тестирование
@@ -79,7 +81,7 @@ def main() -> None:
             output: float = 0
             for j in range(inputs_amount):
                 output += w[j] * testing_outputs[epoch + j]
-            output -= T
+            output -= t
 
             ideal_output: float = testing_outputs[epoch + inputs_amount]  # Истинное значение функции
             error: float = output - ideal_output  # Отклонение от функции
@@ -92,7 +94,7 @@ def main() -> None:
                   f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
         square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
-        print(f'Testing square error: {square_error}')
+        print(f'Среднеквадратичная ошибка: {square_error}')
 
     except OverflowError:
         print('Слишком большая скорость обучения, выход из программы')
