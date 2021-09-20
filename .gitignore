@@ -12,7 +12,7 @@ dist/
 *.log
 
 # Package files
-*.jar
+*.jar 
 
 # Maven
 target/
