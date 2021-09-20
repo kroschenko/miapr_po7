@@ -1,9 +1,8 @@
 import math
 import random
 
-STEP = 0.1
 VECTOR_SIZE = 3
-EXPECTED_ERROR = 0.000001
+EXPECTED_ERROR = 0.0000001
 
 weights = [random.uniform(-1, 1) for _ in range(VECTOR_SIZE)]
 T = random.uniform(-1, 1)
@@ -18,18 +17,18 @@ def get_training_data() -> list:
 	data_size = 30
 	training_data = []
 	current_x = 1
-
+	step = 0.1
 	for _ in range(data_size):
 		line = []
 		vector = []
 
 		for _ in range(VECTOR_SIZE):
 			vector.append(get_func_value(current_x))
-			current_x += STEP
+			current_x += step
 
 		line.append(vector)
 		line.append(get_func_value(current_x))
-		current_x -= STEP * 2
+		current_x -= step * 2
 
 		training_data.append(line)
 
@@ -47,6 +46,7 @@ def train_model() -> None:
 
 			error = obtained_result - expected_result
 			common_error += error ** 2
+
 			change_weights(error, vector)
 
 		if math.fabs(common_error) <= EXPECTED_ERROR:
@@ -70,10 +70,15 @@ def predict(vector: list) -> float:
 def change_weights(error: float, vector: list) -> None:
 	global T, weights
 
+	step = get_step(vector)
 	for w_index in range(len(weights)):
-		weights[w_index] -= STEP * error * vector[w_index]
+		weights[w_index] -= step * error * vector[w_index]
 
-	T += STEP * error
+	T += step * error
+
+
+def get_step(vector):
+	return 1 / (1 + sum([x ** 2 for x in vector]))
 
 
 if __name__ == '__main__':
@@ -81,8 +86,8 @@ if __name__ == '__main__':
 	train_model()
 	print('The training is complete!')
 
-	test_vector = [get_func_value(1 + STEP * n) for n in range(3)]
-	right_answer = get_func_value(1 + STEP * 3)
+	test_vector = [get_func_value(1 + 0.1 * n) for n in range(3)]
+	right_answer = get_func_value(1 + 0.1 * 3)
 	print('Test vector:', *test_vector, sep=' ')
 	print('Obtained result: ', predict(test_vector))
 	print('Right result: ', right_answer)
