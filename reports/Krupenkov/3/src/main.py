@@ -18,6 +18,7 @@ def d_activation(y):  # sigmoid'
 class NeuralNetwork:
     x_amount: int
     h_amount: int
+    divider: float
     t_learning: int
     t_testing: int
     speed: float
@@ -36,9 +37,10 @@ class NeuralNetwork:
     y_delta: float
     h_delta: float
 
-    def __init__(self, x_amount, h_amount, t_max, speed, epoch_amount, t_testing):
+    def __init__(self, x_amount, h_amount, divider, t_max, speed, epoch_amount, t_testing):
         self.x_amount = x_amount
         self.h_amount = h_amount
+        self.divider = divider
         self.t_learning = t_max
         self.speed = speed
         self.epoch_amount = epoch_amount
@@ -63,8 +65,8 @@ class NeuralNetwork:
         self.y = self.sy - self.Ty
 
     def learning(self):
-        self.x = [i / 10 for i in range(self.t_learning + self.x_amount)]
-        self.e = self.x[self.x_amount:] + [(self.t_learning + self.x_amount) / 10]
+        self.x = [i / self.divider for i in range(self.t_learning + self.x_amount)]
+        self.e = self.x[self.x_amount:] + [(self.t_learning + self.x_amount) / self.divider]
         self.x = [function(x) for x in self.x]
         self.e = [function(y) for y in self.e]
 
@@ -95,9 +97,9 @@ class NeuralNetwork:
         print(' N:      эталонное значение     полученное значение                 разница')
 
     def testing(self):
-        self.x = [i / 10 for i in range(self.t_learning, self.t_learning + self.x_amount)]
-        self.e = [i / 10 for i in range(self.t_learning + self.x_amount,
-                                        self.t_learning + self.x_amount + self.t_testing)]
+        self.x = [i / self.divider for i in range(self.t_learning, self.t_learning + self.x_amount)]
+        self.e = [i / self.divider for i in range(self.t_learning + self.x_amount,
+                                                  self.t_learning + self.x_amount + self.t_testing)]
         self.x = [function(x) for x in self.x]
         self.e = [function(y) for y in self.e]
 
@@ -111,12 +113,13 @@ class NeuralNetwork:
 def main():
     x_amount = 10
     h_amount = 4
+    divider = 10
     t_learning = 30
     t_testing = 15
     speed = 0.3
     epoch_amount = 1
 
-    nn = NeuralNetwork(x_amount, h_amount, t_learning, speed, epoch_amount, t_testing)
+    nn = NeuralNetwork(x_amount, h_amount, divider, t_learning, speed, epoch_amount, t_testing)
     nn.learning()
     nn.testing()
 
