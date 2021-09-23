@@ -67,11 +67,11 @@ def main() -> None:
             square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
             # print(f'Iteration {iteration:3}  Square error: {square_error}')
 
-        print('\nНейронная сеть обучена, результаты:')
+        print('Нейронная сеть обучена, результаты:')
         print(f'w: {w}\n'
               f'T: {t}\n')
         print('Тестирование на новом участке:')
-        print('Epoch  N:     Идеальное значение    Полученное значение          '
+        print('Iteration  N:     Идеальное значение    Полученное значение          '
               'Локальная ошибка       Квадратичная ошибка   ')
 
         square_error_sum = 0
@@ -90,7 +90,7 @@ def main() -> None:
             square_error_sum += error ** 2
 
             # Вывод результатов
-            print(f'Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
+            print(f'Iteration {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
                   f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
         square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
