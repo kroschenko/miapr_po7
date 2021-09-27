@@ -52,9 +52,9 @@ int main() {
 
 			T += Alpha * (y1 - etalon_values[i + enteries]); //изменение порога нейронной сети
 			E += 0.5 * pow(y1 - etalon_values[i + enteries], 2); //расчет суммарной среднеквадратичной ошибки
-			era++;
+			
 		}
-
+		era++;
 		cout << era << " | " << E << endl;
 		if (E < Em) break;
 	}  //далее сеть обучена
