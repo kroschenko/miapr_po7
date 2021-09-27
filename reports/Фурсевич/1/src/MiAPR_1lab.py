@@ -23,9 +23,9 @@ def row_elements(ind):
 
 
 if __name__ == '__main__':
-	error = 0
+	error, count = 0, 0
 	while True:
-		for i in range(45):
+		for i in range(30):
 			y = row_elements(i)
 			y_pract = y[0][0] * w[0] + y[0][1] * w[1] + y[0][2] * w[2] - limit
 			mistake = y_pract - y[1]
@@ -33,8 +33,10 @@ if __name__ == '__main__':
 			limit += speed * mistake
 			for j in range(kol_vh - 1):
 				w[j] -= speed * mistake * y[0][j]
-		# print(error)
+		count += 1
+		
 		if error <= mistake_min:
+			print("Количество эпох:", count)
 			break
 		error = 0
 
