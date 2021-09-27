@@ -10,7 +10,7 @@
 
 Списки групп: 
 
-
+https://docs.google.com/spreadsheets/d/1YnrmGFrauOP0LvZkaEuSN-_n7cpCkZrwExg4uRmEUPY/edit?usp=sharing
 
 Отчеты коммитаем в **reports/<Ваша_фамилия>/<Номер_лабораторной_работы>/rep**
 
