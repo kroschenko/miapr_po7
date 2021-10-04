@@ -1,9 +1,9 @@
 from math import sin
-from random import uniform
+from random import uniform, seed
 from typing import List
 
 # Гиперпараметры обучения
-MIN_SQUARE_ERROR = 1e-32  # Минимальная ошибка для остановки обучения
+MIN_SQUARE_ERROR = 1e-25  # Минимальная ошибка для остановки обучения
 TRAINING_SPEED = 1.0e-1  # Скорость обучения нейронной сети
 TRAINING_EPOCH_AMOUNT = 30  # Количество значений функции (эпох) для обучения
 TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
@@ -16,6 +16,7 @@ def function(x: float) -> float:
 
 
 def main() -> None:
+    # seed(20)
     inputs_amount = 5  # Количество входов
     step = 0.1  # Шаг табуляции функции
 
@@ -95,6 +96,7 @@ def main() -> None:
 
         square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
         print(f'Среднеквадратичная ошибка: {square_error}')
+        print(f'Количество эпох: {iteration}')
 
     except OverflowError:
         print('Слишком большая скорость обучения, выход из программы')

@@ -5,6 +5,9 @@ from typing import List
 
 def function(x):
     return 0.1 * cos(0.3 * x) + 0.08 * sin(0.3 * x)
+    # return sin(8 * x) + 0.3
+    # return 1 / (1 + exp(-x))
+    # return x / 100
 
 
 def activation(s):  # sigmoid
@@ -30,7 +33,7 @@ class NeuralNetwork:
     Th: float
     Ty: float
     h: List[float]
-    sh: float
+    sh: List[float]
     wh: List[float]
     y: float
     sy: float
@@ -46,19 +49,19 @@ class NeuralNetwork:
         self.epoch_amount = epoch_amount
         self.t_testing = t_testing
 
-        self.wx = [[uniform(-1, 1) for _ in range(self.h_amount)] for _ in range(self.x_amount)]
-        self.wh = [uniform(-1, 1) for _ in range(self.h_amount)]
-        self.Th = uniform(-1, 1)
-        self.Ty = uniform(-1, 1)
+        self.wx = [[uniform(-0.1, 0.1) for _ in range(self.h_amount)] for _ in range(self.x_amount)]
+        self.wh = [uniform(-0.1, 0.1) for _ in range(self.h_amount)]
+        self.Th = uniform(-0.1, 0.1)
+        self.Ty = uniform(-0.1, 0.1)
 
-    def calculating(self, x):
-        self.sh = 0
+    def calculating(self, x: List[float]) -> None:
         self.h = []
+        self.sh = [0 for _ in range(self.h_amount)]
         for j in range(self.h_amount):
             for i, xi in enumerate(x):
-                self.sh += self.wx[i][j] * xi
-            self.sh -= self.Th
-            self.h.append(activation(self.sh))
+                self.sh[j] += self.wx[i][j] * xi
+            self.sh[j] -= self.Th
+            self.h.append(activation(self.sh[j]))
         self.sy = 0
         for j in range(self.h_amount):
             self.sy += self.h[j] * self.wh[j]
@@ -80,13 +83,13 @@ class NeuralNetwork:
                 self.y_delta = self.y - self.e[t]
                 print(f'{t:2}: {self.e[t]:23} {self.y:23} {self.y_delta:23}')
 
-                for j in range(self.h_amount):
-                    self.wh[j] -= self.speed * self.y_delta * self.y
-                    self.Ty += self.speed * self.y_delta
-
                 self.h_delta = 0
                 for j in range(self.h_amount):
                     self.h_delta += self.y_delta * self.wh[j]
+
+                for j in range(self.h_amount):
+                    self.wh[j] -= self.speed * self.y_delta * self.y
+                    self.Ty += self.speed * self.y_delta
 
                 for j in range(self.h_amount):
                     for i in range(self.x_amount):
@@ -97,17 +100,32 @@ class NeuralNetwork:
         print(' N:      эталонное значение     полученное значение                 разница')
 
     def testing(self):
-        self.x = [i / self.divider for i in range(self.t_learning, self.t_learning + self.x_amount)]
+        # Тестирование по собственным результатам
+        # self.x = [i / self.divider for i in range(self.t_learning, self.t_learning + self.x_amount)]
+        # self.e = [i / self.divider for i in range(self.t_learning + self.x_amount,
+        #                                           self.t_learning + self.x_amount + self.t_testing)]
+        # self.x = [function(x) for x in self.x]
+        # self.e = [function(y) for y in self.e]
+        #
+        # for t in range(self.t_testing):
+        #     self.calculating(self.x)
+        #     self.y_delta = self.y - self.e[t]
+        #     print(f'{t:2}: {self.e[t]:23} {self.y:23} {self.y_delta:23}')
+        #     self.x = self.x[1:] + [self.y]
+
+        # Тестирование по эталонным значениям
+        self.x = [i / self.divider for i in range(self.t_learning, self.t_learning + self.x_amount + self.t_testing)]
         self.e = [i / self.divider for i in range(self.t_learning + self.x_amount,
                                                   self.t_learning + self.x_amount + self.t_testing)]
+
         self.x = [function(x) for x in self.x]
         self.e = [function(y) for y in self.e]
 
         for t in range(self.t_testing):
-            self.calculating(self.x)
+            self.calculating(self.x[t:t + self.x_amount])
+
             self.y_delta = self.y - self.e[t]
             print(f'{t:2}: {self.e[t]:23} {self.y:23} {self.y_delta:23}')
-            self.x = self.x[1:] + [self.y]
 
 
 def main():
@@ -116,8 +134,8 @@ def main():
     divider = 10
     t_learning = 30
     t_testing = 15
-    speed = 0.3
-    epoch_amount = 1
+    speed = 0.08
+    epoch_amount = 10
 
     nn = NeuralNetwork(x_amount, h_amount, divider, t_learning, speed, epoch_amount, t_testing)
     nn.learning()
