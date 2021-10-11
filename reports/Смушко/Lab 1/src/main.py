@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 from typing import List
 
-min_error = 0.01
+min_error = 1e-6
 training_speed = 0.009
 
 

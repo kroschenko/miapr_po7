@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 from typing import List
 
-min_error = 0.01
+min_error = 1e-6
 
 
 def func(x: float, a: int, b: int, d: float) -> float:
