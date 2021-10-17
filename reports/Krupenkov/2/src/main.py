@@ -1,10 +1,10 @@
 from math import sin
-from random import uniform
+from random import uniform, seed
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 
 # Гиперпараметры обучения
-MIN_SQUARE_ERROR = 1e-30  # Минимальная ошибка для остановки обучения
+MIN_SQUARE_ERROR = 1e-25  # Минимальная ошибка для остановки обучения
 TRAINING_EPOCH_AMOUNT = 30  # Количество значений функции (эпох) для обучения
 TESTING_EPOCH_AMOUNT = 15  # Количество значений функции (эпох) для прогнозирования
 MAX_ITERATIONS_AMOUNT = 18  # Максимальное количество повторений обучения
@@ -42,6 +42,7 @@ def draw_sin(x_data: List[float], y_data: List[float]) -> None:
 
 
 def main() -> None:
+    # seed(20)
     inputs_amount = 5  # Количество входов
     step = 0.1  # Шаг табуляции функции
 
@@ -120,9 +121,7 @@ def main() -> None:
 
         square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
         print(f'Testing square error: {square_error}')
-
-        draw_error_iteration(*drawing_data_error)
-        draw_sin(*drawing_data_sin)
+        print(f'Количество эпох: {iteration}')
 
     except OverflowError:
         print('Слишком большая скорость обучения, выход из программы')
