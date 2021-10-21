@@ -1,4 +1,4 @@
-from NeuralNetwork import *
+from universalNN import *
 
 
 # Функция по условию (лаб.1 вар.9)

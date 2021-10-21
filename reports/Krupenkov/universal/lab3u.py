@@ -1,4 +1,4 @@
-from NeuralNetwork import *
+from universalNN import *
 
 
 def function_lab3_9(x):
