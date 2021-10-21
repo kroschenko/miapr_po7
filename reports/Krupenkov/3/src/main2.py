@@ -1,7 +1,6 @@
-import numpy as np
 from pprint import pprint
-from random import uniform
-from typing import List
+
+import numpy as np
 
 
 def function(x):
@@ -17,27 +16,6 @@ def d_activation(y):  # sigmoid'
 
 
 class NeuralNetwork:
-    x_amount: int
-    h_amount: int
-    divider: float
-    t_learning: int
-    t_testing: int
-    speed: float
-    epoch_amount: int
-
-    x: List[float]
-    e: List[float]
-    wx: List[List[float]]
-    Th: float
-    Ty: float
-    h: List[float]
-    sh: float
-    wh: List[float]
-    y: float
-    sy: float
-    y_delta: float
-    h_delta: float
-
     def __init__(self, x_amount, h_amount, divider, t_max, speed, epoch_amount, t_testing):
         self.x_amount = x_amount
         self.h_amount = h_amount
@@ -47,12 +25,10 @@ class NeuralNetwork:
         self.epoch_amount = epoch_amount
         self.t_testing = t_testing
 
-        self.wx = [[uniform(-0.1, 0.1) for _ in range(self.h_amount)] for _ in range(self.x_amount)]
-        self.wh = [uniform(-0.1, 0.1) for _ in range(self.h_amount)]
-        # self.Th = uniform(-0.1, 0.1)
-        # self.Ty = uniform(-0.1, 0.1)
-        self.Th, self.Ty = 0, 0
-
+        self.wx = np.random.uniform(-0.1, 0.1, (self.x_amount, self.h_amount))
+        self.wh = np.random.uniform(-0.1, 0.1, self.h_amount)
+        self.Th = np.random.uniform(-0.1, 0.1)
+        self.Ty = np.random.uniform(-0.1, 0.1)
 
     def calculating(self, x):
         self.sh = 0
@@ -100,11 +76,6 @@ class NeuralNetwork:
         print(' N:      эталонное значение     полученное значение                 разница')
 
     def testing(self):
-        self.x = [i / self.divider for i in range(self.t_learning, self.t_learning + self.x_amount)]
-        self.e = [i / self.divider for i in range(self.t_learning + self.x_amount,
-                                                  self.t_learning + self.x_amount + self.t_testing)]
-        self.x = [function(x) for x in self.x]
-        self.e = [function(y) for y in self.e]
         square_error = 0
 
         for t in range(self.t_testing):
@@ -116,23 +87,6 @@ class NeuralNetwork:
 
         return square_error
 
-    def get_weights(self):
-        print(f'\nwx: ')
-        pprint(self.wx, width=120, compact=True)
-
-        print(
-            f'''Th:
-{self.Th}
-wh: 
-{self.wh}
-Ty: 
-{self.Ty}
-''')
-        return self.wx, self.Th, self.wh, self.Ty
-
-    def set_weights(self, wx, Th, wh, Ty):
-        self.wx, self.Th, self.wh, self.Ty = wx, Th, wh, Ty
-
 
 def main():
     x_amount = 10
@@ -143,21 +97,17 @@ def main():
     speed = 0.2
     epoch_amount = 1
 
-    i = 0
-    while True:
-        nn = NeuralNetwork(x_amount, h_amount, divider, t_learning, speed, epoch_amount, t_testing)
-        try:
-            nn.learning()
-        finally:
-            cum = nn.testing()
-            print(f'Новая нейронная сеть №{i}: {cum}')
-            i += 1
-            if cum < 0.0001:
-                for_coping = nn.get_weights()
-                print('For coping:')
-                pprint(for_coping, width=120, compact=True)
-                break
-            del nn
+    x = np.array([[]], float)
+    for i in range(t_learning + x_amount):
+        x = np.append(x, np.array([np.arange(i, i + x_amount) / 10]))
+    # x.reshape(t_learning, x_amount)
+    e = np.arange(t_learning + x_amount, t_learning + x_amount + t_testing) / 10
+    x = function(x)
+    e = function(e)
+
+    nn = NeuralNetwork(x_amount, h_amount, divider, t_learning, speed, epoch_amount, t_testing)
+    nn.learning()
+    nn.testing()
 
 
 if __name__ == '__main__':

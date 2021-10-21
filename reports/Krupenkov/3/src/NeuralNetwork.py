@@ -1,4 +1,29 @@
+# Made by FalseR
+
 import numpy as np
+
+
+def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, np.ndarray]:
+    temp = np.arange(count + lenght, dtype=np.double)
+    x = np.zeros(shape=(count, lenght), dtype=np.double)
+    for i in range(count):
+        x[i] = temp[i: lenght + i]
+    e = temp[lenght: lenght + count]
+
+    x = x * step + begin
+    e = e * step + begin
+    if function is None:
+        return x, e
+    else:
+        return function(x), function(e)
+
+
+def shuffle_set(x, e):
+    randomize = np.arange(len(x))
+    np.random.shuffle(randomize)
+    x = x[randomize]
+    e = e[randomize]
+    return x, e
 
 
 def sigmoid(s):  # sigmoid
@@ -20,8 +45,8 @@ def d_linear(y):
 class Layer:
     def __init__(self, lens: tuple[int, int],
                  f_act=linear, d_f_act=d_linear):
-        self.w = np.random.uniform(0, 0.5, lens)
-        self.t = np.random.uniform(0, 0.5)
+        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
+        self.t: float = np.random.uniform(-0.5, 0.5)
         self.f_act = f_act
         self.d_f_act = d_f_act
 
@@ -31,9 +56,8 @@ class Layer:
         self.y = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, error: np.ndarray, alpha=0.5):
-        # print(self.w, error, self.d_f_act(self.s), sep='\n', end='\n\n')
-        error_later = np.dot(self.w * self.d_f_act(self.s.transpose()), error)
+    def back_propagation(self, error: np.ndarray, alpha):
+        error_later = np.dot(error * self.d_f_act(self.s), self.w.transpose())
 
         for j in range(self.w.shape[1]):
             for i in range(self.w.shape[0]):
@@ -53,26 +77,14 @@ class NeuralNetwork:
             x = layer.go(x)
         return x
 
-    def learn(self, x: np.ndarray, e, alpha=0.1):
+    def learn(self, x: np.ndarray, e: float, alpha=0.1):
         result = self.go(x)
         delta = result - e
         for layer in reversed(self.layers):
-            delta = layer.back_propagation(delta, alpha=0.1)
+            delta = layer.back_propagation(delta, alpha)
 
-
-def main():
-    l1 = Layer(lens=(2, 3), f_act=sigmoid, d_f_act=d_sigmoid)
-    l2 = Layer(lens=(3, 1), f_act=linear, d_f_act=d_linear)
-    nn = NeuralNetwork([l1, l2])
-    x = np.array([[0, 0], [1, 0], [1, 0], [1, 1]], float)
-    for i in range(1):
-        nn.learn(x=np.array([0, 0], float), e=0.0)
-        nn.learn(x=np.array([0, 1], float), e=1.0)
-        nn.learn(x=np.array([1, 0], float), e=1.0)
-        nn.learn(x=np.array([1, 1], float), e=0.0)
-    for el in x:
-        print(nn.go(el))
-
-
-if __name__ == '__main__':
-    main()
+    def go_results(self, x, e):
+        print('                эталон        выходное значение                  разница         среднекв. ошибка')
+        for i in range(len(e)):
+            y: float = self.go(x[i])[0]
+            print(f'{e[i] : 22}{y: 25}{abs(e[i] - y) : 25}{(e[i] - y) ** 2 : 25}')
