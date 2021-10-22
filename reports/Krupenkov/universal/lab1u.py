@@ -1,4 +1,4 @@
-from universalNN import *
+from uninn import *
 
 
 # Функция по условию (лаб.1 вар.9)

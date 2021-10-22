@@ -1,10 +1,12 @@
-# Made by FalseR
 import pickle
-
 import numpy as np
 
 
 def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, np.ndarray]:
+    """Набор обучающей выборки типа:
+
+    x = [ [1 2 3] [2 3 4] [3 4 5] ]
+    e = [4 5 6]\n"""
     temp = np.arange(count + lenght, dtype=np.double)
     x = np.zeros(shape=(count, lenght), dtype=np.double)
     for i in range(count):
@@ -20,6 +22,7 @@ def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, 
 
 
 def shuffle_set(x, e):
+    """Перемешивание набора обучающей выборки"""
     randomize = np.arange(len(x))
     np.random.shuffle(randomize)
     x = x[randomize]
@@ -44,6 +47,10 @@ def d_linear(y):
 
 
 class Layer:
+    """Слой нейросети
+
+    Параметры: слын
+    """
     def __init__(self, lens: tuple[int, int],
                  f_act=linear, d_f_act=d_linear):
         self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
@@ -90,10 +97,11 @@ class NeuralNetwork:
             y: float = self.go(x[i])[0]
             print(f'{e[i] : 22}{y: 25}{abs(e[i] - y) : 25}{(e[i] - y) ** 2 : 25}')
 
-    def save(self):
+    def save(self, filename=None):
         ans = input('Желаете сохранить? (y/n): ')
         if ans == 'y':
-            filename = input('Имя файла (*.nn):') + '.nn'
+            if filename is None:
+                filename = input('Имя файла (*.nn): ') + '.nn'
             with open(filename, 'wb') as file:
                 pickle.dump(self, file)
             print('Сохранено в', filename)
@@ -102,8 +110,9 @@ class NeuralNetwork:
         return
 
     @staticmethod
-    def load():
-        filename = input('Имя файла (*.nn):') + '.nn'
+    def load(filename=None):
+        if filename is None:
+            filename = input('Имя файла (*.nn): ') + '.nn'
         with open(filename, 'rb') as file:
             new_nn = pickle.load(file)
         return new_nn
