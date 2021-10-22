@@ -1,4 +1,5 @@
 # Made by FalseR
+import pickle
 
 import numpy as np
 
@@ -88,3 +89,21 @@ class NeuralNetwork:
         for i in range(len(e)):
             y: float = self.go(x[i])[0]
             print(f'{e[i] : 22}{y: 25}{abs(e[i] - y) : 25}{(e[i] - y) ** 2 : 25}')
+
+    def save(self):
+        ans = input('Желаете сохранить? (y/n): ')
+        if ans == 'y':
+            filename = input('Имя файла (*.nn):') + '.nn'
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+            print('Сохранено в', filename)
+        else:
+            print('Сохранение отклонено')
+        return
+
+    @staticmethod
+    def load():
+        filename = input('Имя файла (*.nn):') + '.nn'
+        with open(filename, 'rb') as file:
+            new_nn = pickle.load(file)
+        return new_nn
