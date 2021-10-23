@@ -1,4 +1,5 @@
-from uninn_adaptive import *
+import uninn
+import numpy as np
 
 
 def function_lab3_9(x):
@@ -6,21 +7,22 @@ def function_lab3_9(x):
 
 
 def main():
-    l1 = Layer(lens=(10, 4), f_act=sigmoid, d_f_act=d_sigmoid)
-    l2 = Layer(lens=(4, 1))
-    nn = NeuralNetwork([l1, l2])
-    # nn = NeuralNetwork.load('l4.nn')
+    l1 = uninn.Layer(lens=(10, 4),
+                     f_act=uninn.funsact.sigmoid,
+                     d_f_act=uninn.funsact.d_sigmoid)
+    l2 = uninn.Layer(lens=(4, 1))
+    nn = uninn.NeuralNetwork(l1, l2)
+    # nn = uninn.NeuralNetwork.load('l4.nn')
 
-    learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
-    test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
+    learn_x, learn_e = uninn.predict_set(0, 10, 30, 0.1, function=function_lab3_9)
+    test_x, test_e = uninn.predict_set(3, 10, 15, 0.1, function=function_lab3_9)
 
-    for t in range(1000):
-        learn_x, learn_e = shuffle_set(learn_x, learn_e)
-        for i in range(30):
-            nn.learn(learn_x[i], learn_e[i])
+    for t in range(1):
+        learn_x, learn_e = uninn.shuffle_set(learn_x, learn_e)
+        nn.learn(learn_x, learn_e)
 
     nn.go_results(test_x, test_e)
-    nn.save('l4.nn')
+    # nn.save('l4.nn')
 
 
 if __name__ == '__main__':
