@@ -55,22 +55,9 @@ class Layer:
         self.y: np.ndarray = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
+    def back_propagation(self, error: np.ndarray, alpha: float) -> np.ndarray:
         """Обратное распространение ошибки с изменением весов, порога"""
         error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
-        if alpha is None:
-            # alpha = sum(error ** 2 * self.d_f_act(self.y)) \
-            #         / self.d_f_act(self.f_act(0)) \
-            #         / (1 + sum(error ** 2 * self.d_f_act(self.y) ** 2))
-            print(f'''{sum(error ** 2 * self.d_f_act(self.y))}
-            {self.d_f_act(y=self.f_act(0))}
-            {(1 + (self.y ** 2).sum())}
-            {sum((self.y * self.d_f_act(self.y)) ** 2)}''')
-            alpha = sum(error ** 2 * self.d_f_act(self.y)) \
-                    / self.d_f_act(y=self.f_act(0)) \
-                    / (1 + (self.y ** 2).sum()) \
-                    / sum((self.y * self.d_f_act(self.y)) ** 2)
-            print(f'alpha: {alpha}')
 
         for j in range(self.w.shape[1]):
             for i in range(self.w.shape[0]):
@@ -92,18 +79,21 @@ class NeuralNetwork:
             x = layer.go(x)
         return x
 
-    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None) -> None:
+    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None) -> float:
         """Обучение набором обучающей выборки
 
         - x.shape = (n, len)
         - e.shape(len,)
         """
 
+        square_error = 0
         for i in range(len(e)):
             result = self.go(x[i])
             delta = result - e[i]
+            square_error += delta ** 2 / 2
             for layer in reversed(self.layers):
                 delta = layer.back_propagation(delta, alpha)
+        return square_error
 
     def go_results(self, x, e) -> None:
         """Красивый вывод прогона тестирующей выборки"""
@@ -117,9 +107,10 @@ class NeuralNetwork:
 
     def save(self, filename=None) -> None:
         ans = input('Желаете сохранить? (y/n): ')
-        if ans == 'y':
+        if ans[0] == 'y':
             if filename is None:
                 filename = input('Имя файла (*.nn): ') + '.nn'
+            filename = 'nn_files/' + filename
             with open(filename, 'wb') as file:
                 pickle.dump(self, file)
             print('Сохранено в', filename)
@@ -130,6 +121,59 @@ class NeuralNetwork:
     def load(filename=None):
         if filename is None:
             filename = input('Имя файла (*.nn): ') + '.nn'
+        filename = 'nn_files/' + filename
         with open(filename, 'rb') as file:
             new_nn: NeuralNetwork = pickle.load(file)
         return new_nn
+
+
+class LayerSigmoid(Layer):
+    class Layer:
+        """Слой нейросети"""
+
+        def __init__(self, lens: tuple[int, int]):
+            """Слой с сигмоидной функцией активации"""
+            self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
+            self.t: float = np.random.uniform(-0.5, 0.5)
+            self.f_act = funsact.sigmoid
+            self.d_f_act = funsact.d_sigmoid
+
+        def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
+            """Обратное распространение ошибки с изменением весов, порога"""
+            error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
+            if alpha is None:
+                alpha = 4 * sum(error ** 2 * self.d_f_act(self.y)) \
+                        / (1 + sum(self.y ** 2)) \
+                        / sum((error * self.y * (1 - self.y)) ** 2)
+                print(alpha)
+
+            for j in range(self.w.shape[1]):
+                for i in range(self.w.shape[0]):
+                    gamma = alpha * error[j] * self.d_f_act(y=self.y[j])
+                    self.w[i][j] -= gamma * self.x[i]
+                    self.t += gamma
+
+            return error_later
+
+
+class LayerLinear(Layer):
+    """Слой нейросети"""
+
+    def __init__(self, lens: tuple[int, int]):
+        """Слой с линейной функцией активации"""
+        super().__init__(lens, funsact.sigmoid, funsact.d_sigmoid)
+
+    def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
+        """Обратное распространение ошибки с изменением весов, порога"""
+        error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
+        if alpha is None:
+            alpha = 1 / (1 + sum(self.x ** 2))
+            print(alpha)
+
+        for j in range(self.w.shape[1]):
+            for i in range(self.w.shape[0]):
+                gamma = alpha * error[j] * self.d_f_act(y=self.y[j])
+                self.w[i][j] -= gamma * self.x[i]
+                self.t += gamma
+
+        return error_later
