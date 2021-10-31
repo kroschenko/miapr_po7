@@ -78,6 +78,7 @@ def main() -> None:
 
                 # Изменение скорости обучение
                 training_speed = 1 / (1 + sum([y ** 2 for y in training_outputs[epoch:epoch + inputs_amount]]))
+                print(training_speed)
 
                 # Обновление весов и порога (Формула 1.7, 1.8)
                 for t in range(inputs_amount):
@@ -92,8 +93,8 @@ def main() -> None:
                 drawing_data_sin[0].append(step * epoch)
                 drawing_data_sin[1].append(output)
 
-                print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
-                      f'{error:24}  {error ** 2 if error else "            are the same":24}')
+                # print(f'Iteration {iteration:3}  Epoch {epoch + 1:2}:  {ideal_output:21}  {output:21}  '
+                #       f'{error:24}  {error ** 2 if error else "            are the same":24}')
 
             square_error = square_error_sum / TRAINING_EPOCH_AMOUNT
             print(f'Iteration {iteration:3}  Square error: {square_error}')
