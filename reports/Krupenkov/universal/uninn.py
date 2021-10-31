@@ -1,8 +1,7 @@
 import pickle
-from typing import Optional
-
-import funsact
 import numpy as np
+from typing import Optional
+import funsact
 
 
 def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, np.ndarray]:
@@ -33,18 +32,34 @@ def shuffle_set(x, e) -> tuple[np.ndarray, np.ndarray]:
     return x, e
 
 
+class EmptyAlphaError(Exception):
+    def __str__(self):
+        return """
+    class Layer can't have empty alpha
+    use special classes (LayerSigmoid, LayerLinear)
+        """
+
+
 class Layer:
     """Слой нейросети"""
 
     def __init__(
-            self, lens: tuple[int, int],
+            self,
+            lens: tuple[int, int],
             f_act=funsact.linear, d_f_act=funsact.d_linear):
         """
         - lens (количество нейронов этого и следующего слоя)
         - функции активации
         """
-        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
-        self.t: float = np.random.uniform(-0.5, 0.5)
+        np.random.seed(20)
+        # self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
+        # self.t: float = np.random.uniform(-0.5, 0.5)
+        self.w: np.ndarray = np.array([[0.7307843477381767],
+                                       [0.5069834441916423],
+                                       [0.4702304448948622],
+                                       [0.46518056828409926],
+                                       [0.673038738191043]])
+        self.t: float = 0.2665274474805307
         self.f_act = f_act
         self.d_f_act = d_f_act
 
@@ -55,17 +70,23 @@ class Layer:
         self.y: np.ndarray = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, error: np.ndarray, alpha: float) -> np.ndarray:
+    def back_propagation(self, delta: np.ndarray, alpha: Optional[float]) -> np.ndarray:
         """Обратное распространение ошибки с изменением весов, порога"""
-        error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
+        error_later = np.dot(delta * self.d_f_act(y=self.y), self.w.transpose())
+
+        if not alpha:
+            alpha = self.adaptive_alpha(delta)
 
         for j in range(self.w.shape[1]):
             for i in range(self.w.shape[0]):
-                gamma = alpha * error[j] * self.d_f_act(y=self.y[j])
+                gamma = alpha * delta[j] * self.d_f_act(y=self.y[j])
                 self.w[i][j] -= gamma * self.x[i]
                 self.t += gamma
 
         return error_later
+
+    def adaptive_alpha(self, error):
+        raise EmptyAlphaError
 
 
 class NeuralNetwork:
@@ -82,14 +103,14 @@ class NeuralNetwork:
     def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None) -> float:
         """Обучение набором обучающей выборки
 
-        - x.shape = (n, len)
-        - e.shape(len,)
+        - x: (n, len) ... [[1 2] [2 3]]
+        - e: (len,) ....... [3 4]
         """
 
         square_error = 0
         for i in range(len(e)):
-            result = self.go(x[i])
-            delta = result - e[i]
+            y = self.go(x[i])
+            delta = y - e[i]
             square_error += delta ** 2 / 2
             for layer in reversed(self.layers):
                 delta = layer.back_propagation(delta, alpha)
@@ -128,52 +149,26 @@ class NeuralNetwork:
 
 
 class LayerSigmoid(Layer):
-    class Layer:
-        """Слой нейросети"""
+    """Слой нейросети с сигмоидной функцией активации"""
 
-        def __init__(self, lens: tuple[int, int]):
-            """Слой с сигмоидной функцией активации"""
-            self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
-            self.t: float = np.random.uniform(-0.5, 0.5)
-            self.f_act = funsact.sigmoid
-            self.d_f_act = funsact.d_sigmoid
+    def __init__(self, lens: tuple[int, int]):
+        """Слой нейросети с сигмоидной функцией активации"""
+        super().__init__(lens, f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid)
 
-        def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
-            """Обратное распространение ошибки с изменением весов, порога"""
-            error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
-            if alpha is None:
-                alpha = 4 * sum(error ** 2 * self.d_f_act(self.y)) \
-                        / (1 + sum(self.y ** 2)) \
-                        / sum((error * self.y * (1 - self.y)) ** 2)
-                print(alpha)
-
-            for j in range(self.w.shape[1]):
-                for i in range(self.w.shape[0]):
-                    gamma = alpha * error[j] * self.d_f_act(y=self.y[j])
-                    self.w[i][j] -= gamma * self.x[i]
-                    self.t += gamma
-
-            return error_later
+    def adaptive_alpha(self, delta) -> float:
+        alpha = 4 * sum(delta ** 2 * self.d_f_act(self.y)) \
+                / (1 + sum(self.y ** 2)) \
+                / sum((delta * self.y * (1 - self.y)) ** 2)
+        return alpha
 
 
 class LayerLinear(Layer):
-    """Слой нейросети"""
+    """Слой нейросети с линейной функцией активации"""
 
     def __init__(self, lens: tuple[int, int]):
-        """Слой с линейной функцией активации"""
-        super().__init__(lens, funsact.sigmoid, funsact.d_sigmoid)
+        """Слой нейросети с линейной функцией активации"""
+        super().__init__(lens, funsact.linear, funsact.d_linear)
 
-    def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
-        """Обратное распространение ошибки с изменением весов, порога"""
-        error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
-        if alpha is None:
-            alpha = 1 / (1 + sum(self.x ** 2))
-            print(alpha)
-
-        for j in range(self.w.shape[1]):
-            for i in range(self.w.shape[0]):
-                gamma = alpha * error[j] * self.d_f_act(y=self.y[j])
-                self.w[i][j] -= gamma * self.x[i]
-                self.t += gamma
-
-        return error_later
+    def adaptive_alpha(self, delta) -> float:
+        alpha = 1 / (1 + (self.x ** 2).sum())
+        return alpha

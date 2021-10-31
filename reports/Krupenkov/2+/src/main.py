@@ -57,6 +57,7 @@ def main() -> None:
 
     w: List[float] = [uniform(0, 1) for _ in range(inputs_amount)]
     T: float = uniform(0, 1)  # Порог
+    print(w, T)
     drawing_data_error: Tuple[List[int], List[float]] = ([], [])
     drawing_data_sin: Tuple[List[float], List[float]] = ([], [])
 
