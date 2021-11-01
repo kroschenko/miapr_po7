@@ -1,7 +1,9 @@
 import math
 import random
+import pandas as pd
+import matplotlib.pyplot as plt
 
-EXCPECTED_ERROR = 0.00001
+EXCPECTED_ERROR = 1e-6
 INPUT_SIZE = 6
 HIDDEN_LAYER_SIZE = 2
 FUNC_STEP = 0.1
@@ -9,6 +11,7 @@ TRAINING_STEP = 0.5
 weights = {}
 T = {}
 
+error_changes = []
 
 def get_func_value(x):
 	a, b, d, c = 0.3, 0.1, 0.06, 0.1
@@ -33,7 +36,6 @@ def get_training_data() -> list:
 		current_x -= FUNC_STEP * (INPUT_SIZE - 1)
 
 		training_data.append(line)
-
 	return training_data
 
 
@@ -62,10 +64,12 @@ def train_model(training_data):
 				sum_error += 0.5 * sum([x ** 2 for x in prev_errors])
 				change_weights(prev_errors, layer_number, results[layer_number], results[layer_number - 1])
 
+		error_changes.append(sum_error)
 		print(sum_error)
 
 
 def change_weights(errors, layer_number, values, current):
+	global TRAINING_STEP
 	if type(errors) != list:
 		errors = [errors]
 	if type(values) != list:
@@ -123,14 +127,23 @@ def predict(vector):
 
 
 if __name__ == '__main__':
-	train_model(get_training_data())
-	traing_data = get_training_data()
+	training_data = get_training_data()
+	train_model(training_data)
 
-	test_vector = traing_data[0][0]
-	result = traing_data[0][1]
-	prediction = predict(test_vector)
+	right_results, results, errors = [], [], []
 
-	print('Vector: ', test_vector)
-	print('Result: ', prediction)
-	print('Right result: ', result)
-	print('Error: ', abs(result - prediction))
+	for	line in training_data:
+		test_vector = line[0]
+		result = line[1]
+		prediction = predict(test_vector)
+
+		right_results.append(result)
+		results.append(prediction)
+		errors.append(abs(result - prediction))
+
+	table = pd.DataFrame({
+		'Right': pd.Series(right_results),
+		'Received': pd.Series(results),
+		'Errors': pd.Series(errors)
+	})
+

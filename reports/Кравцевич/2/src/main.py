@@ -31,7 +31,7 @@ def get_training_data() -> list:
 		current_x -= step * 2
 
 		training_data.append(line)
-
+	print(current_x)
 	return training_data
 
 
