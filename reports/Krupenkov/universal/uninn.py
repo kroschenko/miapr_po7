@@ -51,15 +51,8 @@ class Layer:
         - lens (количество нейронов этого и следующего слоя)
         - функции активации
         """
-        np.random.seed(20)
-        # self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
-        # self.t: float = np.random.uniform(-0.5, 0.5)
-        self.w: np.ndarray = np.array([[0.7307843477381767],
-                                       [0.5069834441916423],
-                                       [0.4702304448948622],
-                                       [0.46518056828409926],
-                                       [0.673038738191043]])
-        self.t: float = 0.2665274474805307
+        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
+        self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1])
         self.f_act = f_act
         self.d_f_act = d_f_act
 
@@ -78,10 +71,10 @@ class Layer:
             alpha = self.adaptive_alpha(delta)
 
         for j in range(self.w.shape[1]):
+            gamma = alpha * delta[j] * self.d_f_act(y=self.y[j])
             for i in range(self.w.shape[0]):
-                gamma = alpha * delta[j] * self.d_f_act(y=self.y[j])
                 self.w[i][j] -= gamma * self.x[i]
-                self.t += gamma
+            self.t[j] += gamma
 
         return error_later
 

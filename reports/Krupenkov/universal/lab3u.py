@@ -17,7 +17,7 @@ def main():
     learn_x, learn_e = uninn.predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = uninn.predict_set(3, 10, 15, 0.1, function=function_lab3_9)
 
-    for t in range(100000):
+    for t in range(10000):
         learn_x, learn_e = uninn.shuffle_set(learn_x, learn_e)
         nn.learn(learn_x, learn_e, alpha=0.2)
 
