@@ -16,7 +16,7 @@ def main():
         print(f'Square error {t}: {square_error}')
 
     test_x, test_e = predict_set(3, 5, 15, 0.1, function=function_lab1_9)
-    nn.go_results(test_x, test_e)
+    nn.prediction_results_table(test_x, test_e)
 
 
 if __name__ == '__main__':

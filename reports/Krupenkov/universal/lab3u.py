@@ -1,5 +1,4 @@
-import uninn
-import numpy as np
+from uninn import *
 
 
 def function_lab3_9(x):
@@ -7,23 +6,23 @@ def function_lab3_9(x):
 
 
 def main():
-    l1 = uninn.Layer(lens=(10, 4),
-                     f_act=uninn.funsact.sigmoid,
-                     d_f_act=uninn.funsact.d_sigmoid)
-    l2 = uninn.Layer(lens=(4, 1))
-    nn = uninn.NeuralNetwork(l1, l2)
-    # nn = uninn.NeuralNetwork.load('l3.nn')
+    l1 = Layer(lens=(10, 4),
+               f_act=funsact.sigmoid,
+               d_f_act=funsact.d_sigmoid)
+    l2 = Layer(lens=(4, 1))
+    nn = NeuralNetwork(l1, l2)
+    # nn = NeuralNetwork.load('l3.nn')
 
-    learn_x, learn_e = uninn.predict_set(0, 10, 30, 0.1, function=function_lab3_9)
-    test_x, test_e = uninn.predict_set(3, 10, 15, 0.1, function=function_lab3_9)
+    learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
+    test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
     alpha = 0.01
 
-    for tt in range(25):
+    for tt in range(100):
         for t in range(999):
             nn.learn(learn_x, learn_e, alpha)
         print(f'{tt + 1}000 error: {nn.learn(learn_x, learn_e, alpha)}')
 
-    nn.go_results(test_x, test_e)
+    nn.prediction_results_table(test_x, test_e)
     nn.save('l3.nn')
 
 

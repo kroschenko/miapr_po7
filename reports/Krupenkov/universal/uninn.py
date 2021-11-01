@@ -9,11 +9,12 @@ def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, 
 
     x = [ [1 2 3] [2 3 4] [3 4 5] ]
     e = [4 5 6]\n"""
+    # temp - полный массив от 1 до (count + lenght), из которого берутся все значения
     temp = np.arange(count + lenght, dtype=np.double)
     x = np.zeros(shape=(count, lenght), dtype=np.double)
     for i in range(count):
         x[i] = temp[i: lenght + i]
-    e = temp[lenght: lenght + count]
+    e = temp[lenght: lenght + count].reshape(-1, 1)
 
     x = x * step + begin
     e = e * step + begin
@@ -91,7 +92,7 @@ class NeuralNetwork:
             x = layer.go(x)
         return x
 
-    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None) -> float:
+    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None, view=False):
         """Обучение набором обучающей выборки
 
         - x: (n, len) ... [[1 2] [2 3]]
@@ -101,27 +102,32 @@ class NeuralNetwork:
         square_error = 0
         for i in range(len(e)):
             y = self.go(x[i])
+            if view:
+                print(f'{e[i]}\n{y}\n\n')
             error = y - e[i]
             square_error += error ** 2 / 2
             for layer in reversed(self.layers):
                 error = layer.back_propagation(error, alpha)
         return square_error
 
-    def go_results(self, x, e) -> None:
+    def prediction_results_table(self, x: np.ndarray, e: np.ndarray) -> None:
         """Красивый вывод прогона тестирующей выборки"""
         print('                эталон        выходное значение                  разница         среднекв. ошибка')
-        square_error = 0
+        y = self.go(x)
+        y = y.reshape(-1)
+        e = e.reshape(-1)
+        delta = y - e
+        square_error = delta ** 2 / 2
         for i in range(len(e)):
-            y: float = self.go(x[i])[0]
-            delta = y - e[i]
-            square_error += delta ** 2 / 2
-            print(f'{e[i] : 22}{y: 25}{delta : 25}{square_error : 25}')
+            print(f'{e[i] : 22}{y[i]: 25}{delta[i] : 25}{square_error[i] : 25}')
+        print(f'  Finally square error:{square_error[-1] : 24}')
 
     def save(self, filename=None) -> None:
         ans = input('Желаете сохранить? (y/n): ')
         if ans[0] == 'y':
             if filename is None:
                 filename = input('Имя файла (*.nn): ') + '.nn'
+
             filename = 'nn_files/' + filename
             with open(filename, 'wb') as file:
                 pickle.dump(self, file)
