@@ -63,18 +63,16 @@ class Layer:
         self.y: np.ndarray = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, delta: np.ndarray, alpha: Optional[float]) -> np.ndarray:
+    def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
         """Обратное распространение ошибки с изменением весов, порога"""
-        error_later = np.dot(delta * self.d_f_act(y=self.y), self.w.transpose())
+        error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
 
         if not alpha:
-            alpha = self.adaptive_alpha(delta)
+            alpha = self.adaptive_alpha(error)
 
-        for j in range(self.w.shape[1]):
-            gamma = alpha * delta[j] * self.d_f_act(y=self.y[j])
-            for i in range(self.w.shape[0]):
-                self.w[i][j] -= gamma * self.x[i]
-            self.t[j] += gamma
+        gamma = alpha * error * self.d_f_act(y=self.y)
+        self.w -= np.dot(self.x.reshape(-1, 1), gamma.reshape(1, -1))
+        self.t += gamma
 
         return error_later
 
@@ -103,10 +101,10 @@ class NeuralNetwork:
         square_error = 0
         for i in range(len(e)):
             y = self.go(x[i])
-            delta = y - e[i]
-            square_error += delta ** 2 / 2
+            error = y - e[i]
+            square_error += error ** 2 / 2
             for layer in reversed(self.layers):
-                delta = layer.back_propagation(delta, alpha)
+                error = layer.back_propagation(error, alpha)
         return square_error
 
     def go_results(self, x, e) -> None:

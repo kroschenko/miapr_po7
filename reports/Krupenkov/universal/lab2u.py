@@ -1,9 +1,5 @@
 from uninn import *
-
-
-# Функция по условию (лаб.1 вар.9)
-def function_lab1_9(x: float) -> float:
-    return np.sin(8 * x) + 0.3
+from lab1u import function_lab1_9
 
 
 def main():

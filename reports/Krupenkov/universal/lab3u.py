@@ -16,14 +16,20 @@ def main():
 
     learn_x, learn_e = uninn.predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = uninn.predict_set(3, 10, 15, 0.1, function=function_lab3_9)
+    alpha = 0.01
 
-    for t in range(10000):
-        learn_x, learn_e = uninn.shuffle_set(learn_x, learn_e)
-        nn.learn(learn_x, learn_e, alpha=0.2)
+    for tt in range(25):
+        for t in range(999):
+            nn.learn(learn_x, learn_e, alpha)
+        print(f'{tt + 1}000 error: {nn.learn(learn_x, learn_e, alpha)}')
 
     nn.go_results(test_x, test_e)
     nn.save('l3.nn')
 
 
 if __name__ == '__main__':
-    main()
+    while True:
+        main()
+        ans = input('Еще? (y/n): ')
+        if ans[0] != 'y':
+            break
