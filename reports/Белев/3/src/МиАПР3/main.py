@@ -14,7 +14,10 @@ def hiddencalc(x, w, t, model):
     summ = 0
     for i in range(6):
         summ += x[i + model] * w[i]
-    return 1 / 1 + exp(-(summ - t))
+    S = summ - t
+    return 1 / (1 + exp(-1 * S))
+
+
 # Подсчет результата на скрытом слое
 
 def outcalc(x, w, t):
@@ -22,6 +25,8 @@ def outcalc(x, w, t):
     for i in range(2):
         summ += x[i] * w[i]
     return summ - t
+
+
 # Подсчет результата на выходном слое
 
 x_list = [f(i) for i in range(36)]
@@ -29,7 +34,7 @@ e_list = [f(i) for i in range(6, 37)]
 # Создаются списки образов
 
 
-ls = 0.01
+ls = 0.5
 
 hidden_res = [0, 0]  # Результаты подсчётов на скрытом слое
 
@@ -41,23 +46,23 @@ Err_list = []
 
 w_list = [
     [  # Веса для  1 и 2 н.э. на i слое соотв
-        [rand(10) / 100. for i in range(6)],
-        [rand(10) / 100. for i in range(6)]
+        [rand(-100, 100) / 1000 for i in range(6)],
+        [rand(-100, 100) / 1000 for i in range(6)]
     ],
-    [rand(10) / 100. for i in range(2)]
+    [rand(-100, 100) / 1000 for i in range(2)]
 ]
 # Веса инициализируются случайным образом
 
 
 T_list = [
-    [rand(10) / 100. for i in range(2)],
-    rand(10) / 100.
+    [rand(-100, 100) / 1000. for i in range(2)],
+    rand(-100, 100) / 1000.
 ]
 # Пороги инициализируются случайным образом
 
 
 # while True:
-for age in range(10000):
+for age in range(1000):
 
     MSE = 0  # Средняя квадратичная ошибка вначале эпохи равна 0
 
@@ -87,14 +92,14 @@ for age in range(10000):
         # Изменение весов на i-том слое
 
         for j in range(2):
-            w_list[1][j] = w_list[1][j] - ls * Ej * hidden_res[j]
+            w_list[1][j] = w_list[1][j] - ls * Ej * hidden_res[j] * y_pred
         # Изменение весов на j-том слое
 
         for i in range(2):
             T_list[0][i] = T_list[0][i] + ls * Ei[i] * hidden_res[i] * (1 - hidden_res[i])
         # Изменение порогов на i-том слое
 
-        T_list[1] = T_list[1] + ls * Ej
+        T_list[1] = T_list[1] + ls * Ej * y_pred
         # Изменение порога на j-том слое
 
     Err_list.append(MSE / 2)
@@ -102,13 +107,17 @@ for age in range(10000):
     print(MSE)
     # if MSE < 10 ** (-20):
     #     break
+list_pred = []
+for res in range(30):
+    for i in range(2):
+        hidden_res[i] = hiddencalc(x_list, w_list[0][i], T_list[0][i], res)
 
-for i in range(2):
-    hidden_res[i] = hiddencalc(x_list, w_list[0][i], T_list[0][i], 0)
+    y_pred = outcalc(hidden_res, w_list[1], T_list[1])
 
-y_pred = outcalc(hidden_res, w_list[1], T_list[1])
+    list_pred.append(y_pred)
+    print(y_pred, " = ", e_list[res])
 
-print(y_pred, " = ", e_list[0])
-
-plt.plot(Err_list)
+plt.plot(e_list)
+plt.show()
+plt.plot(list_pred)
 plt.show()
