@@ -16,9 +16,9 @@ def noise_j(arr: np.ndarray, j) -> np.ndarray:
 
 
 def main():
-    # relu = funsact.Relu(k=0.1)
-    l1 = LayerLinear(lens=(20, 20))
-    l2 = LayerLinear(lens=(20, 8))
+    relu = funsact.Relu(k=0.3)
+    l1 = Layer(lens=(20, 40), f_act=relu.f, d_f_act=relu.d)
+    l2 = LayerLinear(lens=(40, 8))
     nn = NeuralNetwork(l1, l2)
     # nn = NeuralNetwork.load('l5.nn')
 
@@ -34,7 +34,7 @@ def main():
 
     for thousand in range(100):
         for _ in range(999):
-            nn.learn(noise(learn_x), learn_e)
+            to_min = nn.learn(noise(learn_x), learn_e).sum()
         print(f'{thousand + 1},000 error: {nn.learn(noise(learn_x), learn_e).sum()}')
 
     # for i in range(8):
