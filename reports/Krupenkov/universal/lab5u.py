@@ -10,9 +10,15 @@ def noise(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
+def noise_j(arr: np.ndarray, j) -> np.ndarray:
+    arr[j] = 1 - arr[j]
+    return arr
+
+
 def main():
-    l1 = LayerSigmoid(lens=(20, 40))
-    l2 = LayerLinear(lens=(40, 8))
+    # relu = funsact.Relu(k=0.1)
+    l1 = LayerLinear(lens=(20, 20))
+    l2 = LayerLinear(lens=(20, 8))
     nn = NeuralNetwork(l1, l2)
     # nn = NeuralNetwork.load('l5.nn')
 
@@ -26,18 +32,28 @@ def main():
                         [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]])
     learn_e = np.eye(8)
 
-    for thousand in range(10):
-        for _ in range(9):
-            nn.learn(learn_x, learn_e)
-        square_error = nn.learn(noise(learn_x), learn_e)
-        print(f'{thousand + 1}0 error: {square_error.sum()}')
+    for thousand in range(100):
+        for _ in range(999):
+            nn.learn(noise(learn_x), learn_e)
+        print(f'{thousand + 1},000 error: {nn.learn(noise(learn_x), learn_e).sum()}')
 
+    # for i in range(8):
+    #     print(f'[{i}]: {nn.go(learn_x[i]).argmax()}')
+
+    print('Глубокая проверка:')
+    correct_amount = 0
     for i in range(8):
-        result = nn.go(learn_x[i])
-        print(result.argmax())
+        row = learn_x[i]
+        print(f'[{i}]: {nn.go(learn_x[i]).argmax()} | ', end='')
+        for j in range(20):
+            out = nn.go(noise_j(row, j)).argmax()
+            if out == i:
+                correct_amount += 1
+            print(out, end=' ')
+        print()
+    print(f'Правильно {correct_amount} / 160: {correct_amount / 1.6 : .1f}%')
 
-    nn.save('test.txt')
-    # print(nn)
+    nn.save('l5.nn')
 
 
 if __name__ == '__main__':

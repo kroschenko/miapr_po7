@@ -9,7 +9,7 @@ def repeat_func(func):
     while True:
         func()
         ans = input('Еще? (y/n): ')
-        if not ans or ans[0] != 'y':
+        if not ans or (ans[0] != 'y' and ans != 'н'):
             break
 
 

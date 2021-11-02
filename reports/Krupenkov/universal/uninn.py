@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from typing import Optional
+from typing import Optional, Callable
 import funsact
 
 
@@ -39,7 +39,8 @@ class Layer:
     def __init__(
             self,
             lens: tuple[int, int],
-            f_act=funsact.linear, d_f_act=funsact.d_linear,
+            f_act: Callable = funsact.linear,
+            d_f_act: Callable = funsact.d_linear,
             w=None, t=None):
         """
         - lens (количество нейронов этого и следующего слоя)
@@ -48,8 +49,8 @@ class Layer:
         self.lens = lens
         self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens) if w is None else w
         self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
-        self.f_act = f_act
-        self.d_f_act = d_f_act
+        self.f_act = np.vectorize(f_act)
+        self.d_f_act = np.vectorize(d_f_act)
 
     def go(self, x: np.ndarray) -> np.ndarray:
         """Прохождение слоя"""
@@ -129,7 +130,7 @@ class NeuralNetwork:
 
     def save(self, filename=None) -> None:
         ans = input('Желаете сохранить? (y/n): ')
-        if ans[0] == 'y':
+        if not ans and (ans[0] == 'y' or ans[0] == 'н'):
             if filename is None:
                 filename = input('Имя файла (*.nn): ') + '.nn'
 
