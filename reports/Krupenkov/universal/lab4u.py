@@ -1,5 +1,5 @@
 from uninn import *
-from lab3u import function_lab3_9
+from lab3u import function_lab3_9, repeat_func
 
 
 def main():
@@ -11,18 +11,14 @@ def main():
     learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
 
-    for tt in range(10):
-        for t in range(999):
+    for thousand in range(10):
+        for _ in range(999):
             nn.learn(learn_x, learn_e)
-        print(f'{tt + 1}000 error: {nn.learn(learn_x, learn_e)}')
+        print(f'{thousand + 1},000 error: {nn.learn(learn_x, learn_e)}')
 
     nn.prediction_results_table(test_x, test_e)
     nn.save('l4.nn')
 
 
 if __name__ == '__main__':
-    while True:
-        main()
-        ans = input('Еще? (y/n): ')
-        if ans[0] != 'y':
-            break
+    repeat_func(main)

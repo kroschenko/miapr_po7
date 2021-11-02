@@ -33,27 +33,21 @@ def shuffle_set(x, e) -> tuple[np.ndarray, np.ndarray]:
     return x, e
 
 
-class EmptyAlphaError(Exception):
-    def __str__(self):
-        return """
-    class Layer can't have empty alpha
-    use special classes (LayerSigmoid, LayerLinear)
-        """
-
-
 class Layer:
     """Слой нейросети"""
 
     def __init__(
             self,
             lens: tuple[int, int],
-            f_act=funsact.linear, d_f_act=funsact.d_linear):
+            f_act=funsact.linear, d_f_act=funsact.d_linear,
+            w=None, t=None):
         """
         - lens (количество нейронов этого и следующего слоя)
         - функции активации
         """
-        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens)
-        self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1])
+        self.lens = lens
+        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens) if w is None else w
+        self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
         self.f_act = f_act
         self.d_f_act = d_f_act
 
@@ -64,21 +58,27 @@ class Layer:
         self.y: np.ndarray = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, error: np.ndarray, alpha: Optional[float]) -> np.ndarray:
+    def back_propagation(self, error: np.ndarray, alpha: Optional[float], is_first_layer=False) -> Optional[np.ndarray]:
         """Обратное распространение ошибки с изменением весов, порога"""
-        error_later = np.dot(error * self.d_f_act(y=self.y), self.w.transpose())
+        error_later = np.dot(error * self.d_f_act(self.y), self.w.transpose()) if not is_first_layer else None
 
         if not alpha:
             alpha = self.adaptive_alpha(error)
 
-        gamma = alpha * error * self.d_f_act(y=self.y)
+        gamma = alpha * error * self.d_f_act(self.y)
         self.w -= np.dot(self.x.reshape(-1, 1), gamma.reshape(1, -1))
         self.t += gamma
 
         return error_later
 
     def adaptive_alpha(self, error):
-        raise EmptyAlphaError
+        if not hasattr(self, 'd_f_act_0'):
+            self.d_f_act_0 = self.d_f_act(self.f_act(0))
+        alpha = (error ** 2 * self.d_f_act(self.y).sum()) \
+                / self.d_f_act_0 \
+                / (1 + (self.y ** 2).sum()) \
+                / ((error * self.d_f_act(self.y)) ** 2).sum()
+        return alpha
 
 
 class NeuralNetwork:
@@ -86,13 +86,19 @@ class NeuralNetwork:
         """Создание нейросети с заданием массива слоев"""
         self.layers = args
 
+    def __str__(self) -> str:
+        layer_info = ()
+        for layer in self.layers:
+            layer_info += (layer.w, layer.t)
+        return str(layer_info)
+
     def go(self, x: np.ndarray) -> np.ndarray:
         """Прохождение всех слоев нейросети"""
         for layer in self.layers:
             x = layer.go(x)
         return x
 
-    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None, view=False):
+    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None):
         """Обучение набором обучающей выборки
 
         - x: (n, len) ... [[1 2] [2 3]]
@@ -102,12 +108,11 @@ class NeuralNetwork:
         square_error = 0
         for i in range(len(e)):
             y = self.go(x[i])
-            if view:
-                print(f'{e[i]}\n{y}\n\n')
             error = y - e[i]
             square_error += error ** 2 / 2
-            for layer in reversed(self.layers):
+            for layer in self.layers[:0:-1]:
                 error = layer.back_propagation(error, alpha)
+            self.layers[0].back_propagation(error, alpha, is_first_layer=True)
         return square_error
 
     def prediction_results_table(self, x: np.ndarray, e: np.ndarray) -> None:
@@ -152,10 +157,10 @@ class LayerSigmoid(Layer):
         """Слой нейросети с сигмоидной функцией активации"""
         super().__init__(lens, f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid)
 
-    def adaptive_alpha(self, delta) -> float:
-        alpha = 4 * sum(delta ** 2 * self.d_f_act(self.y)) \
-                / (1 + sum(self.y ** 2)) \
-                / sum((delta * self.y * (1 - self.y)) ** 2)
+    def adaptive_alpha(self, error) -> float:
+        alpha = 4 * (error ** 2 * self.d_f_act(self.y).sum()) \
+                / (1 + (self.y ** 2).sum()) \
+                / ((error * self.y * (1 - self.y)) ** 2).sum()
         return alpha
 
 
@@ -166,6 +171,6 @@ class LayerLinear(Layer):
         """Слой нейросети с линейной функцией активации"""
         super().__init__(lens, funsact.linear, funsact.d_linear)
 
-    def adaptive_alpha(self, delta) -> float:
+    def adaptive_alpha(self, error) -> float:
         alpha = 1 / (1 + (self.x ** 2).sum())
         return alpha

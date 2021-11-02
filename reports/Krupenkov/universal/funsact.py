@@ -16,3 +16,19 @@ def linear(s):  # linear
 
 def d_linear(y):  # linear'
     return 1.0
+
+
+def relu(s):
+    return s if s > 0 else 0
+
+
+def d_relu(y):
+    return 1 if y > 0 else 0
+
+
+def parametric_relu(s, k=0.01):
+    return s if s > 0 else k * s
+
+
+def d_parametric_relu(y, k=0.01):
+    return 1 if y > 0 else k
