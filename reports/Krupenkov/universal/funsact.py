@@ -19,11 +19,11 @@ def d_linear(y):  # linear'
 
 
 def relu_0(s):
-    return s if s > 0 else 0
+    return (s > 0) * s
 
 
 def d_relu_0(y):
-    return 1 if y > 0 else 0
+    return (y > 0) * 1
 
 
 class Relu:
@@ -32,7 +32,9 @@ class Relu:
         self.k = k
 
     def f(self, s):
-        return s if s > 0 else self.k * s
+        return s * self.k + (s > 0) * s * (1 - self.k)
+        # return s if s > 0 else self.k * s
 
     def d(self, y):
-        return 1 if y > 0 else self.k
+        return self.k + (y > 0) * (1 - self.k)
+        # return 1 if y > 0 else self.k

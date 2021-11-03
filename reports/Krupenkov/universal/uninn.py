@@ -41,7 +41,8 @@ class Layer:
             lens: tuple[int, int],
             f_act: Callable = funsact.linear,
             d_f_act: Callable = funsact.d_linear,
-            w=None, t=None):
+            w=None, t=None,
+            is_vectorize=False):
         """
         - lens (количество нейронов этого и следующего слоя)
         - функции активации
@@ -49,8 +50,12 @@ class Layer:
         self.lens = lens
         self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens) if w is None else w
         self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
-        self.f_act = np.vectorize(f_act)
-        self.d_f_act = np.vectorize(d_f_act)
+        if is_vectorize:
+            self.f_act = np.vectorize(f_act)
+            self.d_f_act = np.vectorize(d_f_act)
+        else:
+            self.f_act = f_act
+            self.d_f_act = d_f_act
 
     def go(self, x: np.ndarray) -> np.ndarray:
         """Прохождение слоя"""
@@ -75,7 +80,7 @@ class Layer:
     def adaptive_alpha(self, error):
         if not hasattr(self, 'd_f_act_0'):
             self.d_f_act_0 = self.d_f_act(self.f_act(0))
-        alpha = (error ** 2 * self.d_f_act(self.y).sum()) \
+        alpha = (error ** 2 * self.d_f_act(self.y)).sum() \
                 / self.d_f_act_0 \
                 / (1 + (self.y ** 2).sum()) \
                 / ((error * self.d_f_act(self.y)) ** 2).sum()
@@ -126,11 +131,11 @@ class NeuralNetwork:
         square_error = delta ** 2 / 2
         for i in range(len(e)):
             print(f'{e[i] : 22}{y[i]: 25}{delta[i] : 25}{square_error[i] : 25}')
-        print(f'  Finally square error:{square_error[-1] : 24}')
+        print(f'  Finally square error:{np.average(square_error) * 2 : 24}')
 
     def save(self, filename=None) -> None:
         ans = input('Желаете сохранить? (y/n): ')
-        if not ans and (ans[0] == 'y' or ans[0] == 'н'):
+        if ans and (ans[0] == 'y' or ans[0] == 'н'):
             if filename is None:
                 filename = input('Имя файла (*.nn): ') + '.nn'
 
@@ -173,5 +178,8 @@ class LayerLinear(Layer):
         super().__init__(lens, funsact.linear, funsact.d_linear)
 
     def adaptive_alpha(self, error) -> float:
-        alpha = 1 / (1 + (self.x ** 2).sum())
+        # alpha = 1 / (1 + (self.x ** 2).sum())
+        alpha = np.square(error).sum() \
+                / (1 + (self.y ** 2).sum()) \
+                / error.sum()
         return alpha
