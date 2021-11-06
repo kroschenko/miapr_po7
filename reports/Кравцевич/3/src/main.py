@@ -3,7 +3,7 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-EXCPECTED_ERROR = 1e-6
+EXCPECTED_ERROR = 1e-5
 INPUT_SIZE = 6
 HIDDEN_LAYER_SIZE = 2
 FUNC_STEP = 0.1
@@ -12,6 +12,7 @@ weights = {}
 T = {}
 
 error_changes = []
+
 
 def get_func_value(x):
 	a, b, d, c = 0.3, 0.1, 0.06, 0.1
@@ -49,9 +50,9 @@ def train_model(training_data):
 			expected_result = sample[1]
 
 			results = {}
-			results[0] = data
-			results[1] = get_layer_value(data)
-			results[2] = get_layer_value(results[1], 2, 1)[0]
+			results[0] = data  # input data
+			results[1] = get_layer_value(data)  # hidden layer
+			results[2] = get_layer_value(results[1], 2, 1)[0]  # output layer
 
 			error = results[2] - expected_result
 
@@ -115,8 +116,8 @@ def init_weights(number, input_size, layer_size):
 	weight_matrix = []
 
 	for _ in range(input_size):
-		weight_matrix.append([random.uniform(-0.5, 0.5) for __ in range(layer_size)])
-	t = [random.uniform(-0.5, 0.5) for _ in range(layer_size)]
+		weight_matrix.append([random.uniform(0, 1) for __ in range(layer_size)])
+	t = [random.uniform(0, 1) for _ in range(layer_size)]
 
 	weights[number] = weight_matrix
 	T[number] = t
@@ -132,7 +133,7 @@ if __name__ == '__main__':
 
 	right_results, results, errors = [], [], []
 
-	for	line in training_data:
+	for line in training_data:
 		test_vector = line[0]
 		result = line[1]
 		prediction = predict(test_vector)
@@ -146,4 +147,3 @@ if __name__ == '__main__':
 		'Received': pd.Series(results),
 		'Errors': pd.Series(errors)
 	})
-
