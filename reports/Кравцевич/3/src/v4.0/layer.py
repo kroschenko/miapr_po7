@@ -1,10 +1,9 @@
 import random
-import math
 
 
 class Layer:
 
-	def __init__(self, input_sample_size: int, next_layer_size: int):
+	def __init__(self, input_sample_size: int, next_layer_size: int, activation_func):
 		self.step = 1
 		self.weights = []
 		self.T = []
@@ -12,8 +11,10 @@ class Layer:
 		self.input_values = []
 		self.output_values = []
 		self.next_layer_size = next_layer_size
-		self.weights = [[random.uniform(-1, 1) for _ in range(next_layer_size)] for __ in range(input_sample_size)]
-		self.T = [random.uniform(-1, 1) for _ in range(next_layer_size)]
+		self.weights = [[random.uniform(0, 1) for _ in range(next_layer_size)] for __ in range(input_sample_size)]
+		self.T = [random.uniform(0, 1) for _ in range(next_layer_size)]
+
+		self.activation_func = activation_func
 
 	def set_input_values(self, input_values: list) -> None:
 		self.input_values = input_values
@@ -32,7 +33,7 @@ class Layer:
 
 	def get_output_values(self):
 		sums = self.get_layer_sums()
-		return [1 / (1 + math.exp(-s)) for s in sums]
+		return self.activation_func.get_output_values(sums)
 
 	def init_errors(self, error: list) -> list:
 		errors = []
@@ -47,11 +48,5 @@ class Layer:
 		return errors
 
 	def change_weights(self, errors: list) -> None:
-		for node_index, node_weights in enumerate(self.weights):
-			for next_node_index, weight_value in enumerate(node_weights):
-				self.weights[node_index][next_node_index] -= self.step * errors[next_node_index] * self.output_values[
-					next_node_index] * (1 - self.output_values[next_node_index]) * self.input_values[node_index]
-
-		for t_index, t in enumerate(self.T):
-			self.T[t_index] += self.step * errors[t_index] * self.output_values[t_index] * (
-					1 - self.output_values[t_index])
+		self.weights, self.T = self.activation_func.get_new_weights(self.weights, self.T, self.input_values,
+																	self.output_values, errors)

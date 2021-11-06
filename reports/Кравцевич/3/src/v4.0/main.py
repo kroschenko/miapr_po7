@@ -1,13 +1,15 @@
+import activation_functions
 from layer import Layer
 import math
+import pandas as pd
 
-EXPECTED_ERROR = 1e-6
+EXPECTED_ERROR = 1e-5
 INPUT_SIZE = 6
 HIDDEN_LAYER_SIZE = 2
-FUNC_STEP = 1
+FUNC_STEP = 0.5
 
-input_layer = Layer(INPUT_SIZE, HIDDEN_LAYER_SIZE)
-hidden_layer = Layer(HIDDEN_LAYER_SIZE, 1)
+input_layer = Layer(INPUT_SIZE, HIDDEN_LAYER_SIZE, activation_functions.Sigmoid())
+hidden_layer = Layer(HIDDEN_LAYER_SIZE, 1, activation_functions.Linear())
 
 
 def get_func_value(x):
@@ -44,6 +46,11 @@ def train(training_data):
 			sum += train_model(sample[0], sample[1])
 
 		print(sum)
+		if sum > 100:
+			print(input_layer.weights)
+			print(hidden_layer.weights)
+
+			input()
 		if sum < EXPECTED_ERROR:
 			print('Number: ', epos)
 			break
@@ -58,9 +65,6 @@ def train_model(train_sample, expected_result):
 
 	error = hidden_layer.output_values[0] - expected_result
 	errors = input_layer.init_errors(hidden_layer.init_errors([error]))
-	# sum = 0
-	# for e in errors:
-	# 	sum += e ** 2
 
 	return error ** 2
 
@@ -68,18 +72,28 @@ def train_model(train_sample, expected_result):
 def prediction(sample):
 	input_layer.set_input_values(sample)
 	hidden_layer.set_input_values(input_layer.output_values)
-	return hidden_layer.output_values
+	return hidden_layer.output_values[0]
 
 
 if __name__ == '__main__':
 	training_data = get_training_data()
 	train(get_training_data())
 
-	print('Right: ', training_data[0][1])
-	print('Prediction: ', prediction(training_data[0][0]))
+	right_results, results, errors = [], [], []
 
-	print('Right: ', training_data[1][1])
-	print('Prediction: ', prediction(training_data[1][0]))
+	for line in training_data:
+		test_vector = line[0]
+		result = line[1]
+		predict = prediction(test_vector)
 
-	print('Right: ', training_data[2][1])
-	print('Prediction: ', prediction(training_data[2][0]))
+		right_results.append(result)
+		results.append(predict)
+		errors.append(abs(result - predict))
+
+	table = pd.DataFrame({
+		'Right': pd.Series(right_results),
+		'Received': pd.Series(results),
+		'Errors': pd.Series(errors)
+	})
+
+	print(table)
