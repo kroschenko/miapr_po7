@@ -1,20 +1,26 @@
 import pickle
 import numpy as np
-from typing import Optional, Callable
 import funsact
+from numpy.typing import NDArray
+from typing import Optional, Callable
 
 
-def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, np.ndarray]:
+def predict_set(
+    begin: float,
+    lenght: float,
+    count: int,
+    step: float,
+    function: Optional[Callable] = None,
+) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
     """Набор обучающей выборки типа:
 
     x = [ [1 2 3] [2 3 4] [3 4 5] ]
     e = [4 5 6]\n"""
-    # temp - полный массив от 1 до (count + lenght), из которого берутся все значения
-    temp = np.arange(count + lenght, dtype=np.double)
+    base_array = np.arange(count + lenght, dtype=np.double)
     x = np.zeros(shape=(count, lenght), dtype=np.double)
     for i in range(count):
-        x[i] = temp[i: lenght + i]
-    e = temp[lenght: lenght + count].reshape(-1, 1)
+        x[i] = base_array[i : lenght + i]
+    e = base_array[lenght : lenght + count].reshape(-1, 1)
 
     x = x * step + begin
     e = e * step + begin
@@ -24,7 +30,9 @@ def predict_set(begin, lenght, count, step, function=None) -> tuple[np.ndarray, 
         return function(x), function(e)
 
 
-def shuffle_set(x, e) -> tuple[np.ndarray, np.ndarray]:
+def shuffle_set(
+    x: NDArray[NDArray], e: NDArray[NDArray]
+) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
     """Перемешивание набора обучающей выборки"""
     randomize = np.arange(len(x))
     np.random.shuffle(randomize)
@@ -37,19 +45,21 @@ class Layer:
     """Слой нейросети"""
 
     def __init__(
-            self,
-            lens: tuple[int, int],
-            f_act: Callable = funsact.linear,
-            d_f_act: Callable = funsact.d_linear,
-            w=None, t=None,
-            is_vectorize=False):
+        self,
+        lens: tuple[int, int],
+        f_act: Callable = funsact.linear,
+        d_f_act: Callable = funsact.d_linear,
+        w=None,
+        t=None,
+        is_vectorize=False,
+    ):
         """
         - lens (количество нейронов этого и следующего слоя)
         - функции активации
         """
         self.lens = lens
-        self.w: np.ndarray = np.random.uniform(-0.5, 0.5, lens) if w is None else w
-        self.t: np.ndarray = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
+        self.w = np.random.uniform(-0.5, 0.5, lens) if w is None else w
+        self.t = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
         if is_vectorize:
             self.f_act = np.vectorize(f_act)
             self.d_f_act = np.vectorize(d_f_act)
@@ -57,16 +67,22 @@ class Layer:
             self.f_act = f_act
             self.d_f_act = d_f_act
 
-    def go(self, x: np.ndarray) -> np.ndarray:
+    def go(self, x: NDArray) -> NDArray:
         """Прохождение слоя"""
-        self.x: np.ndarray = x
-        self.s: np.ndarray = np.dot(x, self.w) - self.t
-        self.y: np.ndarray = self.f_act(self.s)
+        self.x = x
+        self.s: NDArray = np.dot(x, self.w) - self.t
+        self.y: NDArray = self.f_act(self.s)
         return self.y
 
-    def back_propagation(self, error: np.ndarray, alpha: Optional[float], is_first_layer=False) -> Optional[np.ndarray]:
+    def back_propagation(
+        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+    ) -> Optional[NDArray]:
         """Обратное распространение ошибки с изменением весов, порога"""
-        error_later = np.dot(error * self.d_f_act(self.y), self.w.transpose()) if not is_first_layer else None
+        error_later = (
+            np.dot(error * self.d_f_act(self.y), self.w.transpose())
+            if not is_first_layer
+            else None
+        )
 
         if not alpha:
             alpha = self.adaptive_alpha(error)
@@ -77,13 +93,15 @@ class Layer:
 
         return error_later
 
-    def adaptive_alpha(self, error):
-        if not hasattr(self, 'd_f_act_0'):
+    def adaptive_alpha(self, error: NDArray) -> float:
+        if not hasattr(self, "d_f_act_0"):
             self.d_f_act_0 = self.d_f_act(self.f_act(0))
-        alpha = (error ** 2 * self.d_f_act(self.y)).sum() \
-                / self.d_f_act_0 \
-                / (1 + (self.y ** 2).sum()) \
-                / ((error * self.d_f_act(self.y)) ** 2).sum()
+        alpha = (
+            (error ** 2 * self.d_f_act(self.y)).sum()
+            / self.d_f_act_0
+            / (1 + (self.y ** 2).sum())
+            / ((error * self.d_f_act(self.y)) ** 2).sum()
+        )
         return alpha
 
 
@@ -92,66 +110,64 @@ class NeuralNetwork:
         """Создание нейросети с заданием массива слоев"""
         self.layers = args
 
-    def __str__(self) -> str:
-        layer_info = ()
-        for layer in self.layers:
-            layer_info += (layer.w, layer.t)
-        return str(layer_info)
-
-    def go(self, x: np.ndarray) -> np.ndarray:
+    def go(self, x: NDArray) -> NDArray:
         """Прохождение всех слоев нейросети"""
         for layer in self.layers:
             x = layer.go(x)
         return x
 
-    def learn(self, x: np.ndarray, e: np.ndarray, alpha: Optional[float] = None):
+    def learn(
+        self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None
+    ) -> NDArray:
         """Обучение набором обучающей выборки
 
         - x: (n, len) ... [[1 2] [2 3]]
         - e: (len,) ....... [3 4]
         """
 
-        square_error = 0
+        square_error = np.zeros(self.layers[-1].lens[1])
         for i in range(len(e)):
-            y = self.go(x[i])
-            error = y - e[i]
+            y: NDArray = self.go(x[i])
+            error: NDArray = y - e[i]
             square_error += error ** 2 / 2
             for layer in self.layers[:0:-1]:
                 error = layer.back_propagation(error, alpha)
             self.layers[0].back_propagation(error, alpha, is_first_layer=True)
-        return square_error
+        return square_error / self.layers[-1].lens[1]
 
-    def prediction_results_table(self, x: np.ndarray, e: np.ndarray) -> None:
+    def prediction_results_table(self, x: NDArray, e: NDArray) -> None:
         """Красивый вывод прогона тестирующей выборки"""
-        print('                эталон        выходное значение                  разница         среднекв. ошибка')
+        print(
+            "                эталон        выходное значение                  разница         среднекв. ошибка"
+        )
         y = self.go(x)
         y = y.reshape(-1)
         e = e.reshape(-1)
         delta = y - e
         square_error = delta ** 2 / 2
         for i in range(len(e)):
-            print(f'{e[i] : 22}{y[i]: 25}{delta[i] : 25}{square_error[i] : 25}')
-        print(f'  Finally square error:{np.average(square_error) * 2 : 24}')
+            print(f"{e[i] : 22}{y[i] : 25}{delta[i] : 25}{square_error[i] : 25}")
+        print(f"\n-- Final testing square error: {np.average(square_error) * 2} --")
 
     def save(self, filename=None) -> None:
-        ans = input('Желаете сохранить? (y/n): ')
-        if ans and (ans[0] == 'y' or ans[0] == 'н'):
+        ans = input("Желаете сохранить? (y/n): ")
+        if ans and (ans[0] == "y" or ans[0] == "н"):
             if filename is None:
-                filename = input('Имя файла (*.nn): ') + '.nn'
+                filename = input("Имя файла (*.nn): ") + ".nn"
 
-            filename = 'nn_files/' + filename
-            with open(filename, 'wb') as file:
+            filename = "nn_files/" + filename
+            with open(filename, "wb") as file:
                 pickle.dump(self, file)
-            print('Сохранено в', filename)
+            print("Сохранено в", filename)
         else:
-            print('Сохранение отклонено')
+            print("Сохранение отклонено")
 
     @staticmethod
     def load(filename=None):
         if filename is None:
-            filename = input('Имя файла (*.nn): ') + '.nn'
-        filename = 'nn_files/' + filename
-        with open(filename, 'rb') as file:
+            filename = input("Имя файла (*.nn): ") + ".nn"
+        filename = "nn_files/" + filename
+        with open(filename, "rb") as file:
             new_nn: NeuralNetwork = pickle.load(file)
         return new_nn
 
@@ -163,10 +179,32 @@ class LayerSigmoid(Layer):
         """Слой нейросети с сигмоидной функцией активации"""
         super().__init__(lens, f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid)
 
+    def back_propagation(
+        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+    ) -> Optional[NDArray]:
+        """Обратное распространение ошибки с изменением весов, порога"""
+        error_later = (
+            np.dot(error * self.y * (1 - self.y), self.w.transpose())
+            if not is_first_layer
+            else None
+        )
+
+        if not alpha:
+            alpha = self.adaptive_alpha(error)
+
+        gamma = alpha * error * self.y * (1 - self.y)
+        self.w -= np.dot(self.x.reshape(-1, 1), gamma.reshape(1, -1))
+        self.t += gamma
+
+        return error_later
+
     def adaptive_alpha(self, error) -> float:
-        alpha = 4 * (error ** 2 * self.d_f_act(self.y).sum()) \
-                / (1 + (self.y ** 2).sum()) \
-                / ((error * self.y * (1 - self.y)) ** 2).sum()
+        alpha = (
+            4
+            * (error ** 2 * self.y * (1 - self.y)).sum()
+            / (1 + (self.x ** 2).sum())
+            / np.square(error * self.y * (1 - self.y)).sum()
+        )
         return alpha
 
 
@@ -177,9 +215,22 @@ class LayerLinear(Layer):
         """Слой нейросети с линейной функцией активации"""
         super().__init__(lens, funsact.linear, funsact.d_linear)
 
+    def back_propagation(
+        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+    ) -> Optional[NDArray]:
+        """Обратное распространение ошибки с изменением весов, порога"""
+        error_later = np.dot(error, self.w.transpose()) if not is_first_layer else None
+
+        if not alpha:
+            alpha = self.adaptive_alpha(error)
+
+        gamma = alpha * error
+        self.w -= np.dot(self.x.reshape(-1, 1), gamma.reshape(1, -1))
+        self.t += gamma
+
+        return error_later
+
     def adaptive_alpha(self, error) -> float:
-        # alpha = 1 / (1 + (self.x ** 2).sum())
-        alpha = np.square(error).sum() \
-                / (1 + (self.y ** 2).sum()) \
-                / error.sum()
+        alpha = 1 / (1 + np.square(self.x).sum())
+        # alpha = (error ** 2).sum() / (1 + (self.y ** 2).sum()) / error.sum()
         return alpha

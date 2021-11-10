@@ -1,10 +1,11 @@
 from uninn import *
-from lab3u import repeat_func
+import time
+# from lab3u import repeat_func
 
 
 def noise(arr: np.ndarray) -> np.ndarray:
     for i in range(len(arr)):
-        if np.random.uniform(0, 1) > 0:
+        if np.random.randint(20) < 1:
             j = np.random.randint(20)
             arr[i][j] = 1 - arr[i][j]
     return arr
@@ -15,50 +16,60 @@ def noise_j(arr: np.ndarray, j) -> np.ndarray:
     return arr
 
 
-def answer(a: np.ndarray) -> int:
-    return abs(1 - a).argmin()
-
-
 def main():
-    # relu = funsact.Relu(k=0.3)
-    l1 = LayerLinear(lens=(20, 160))
-    l2 = LayerLinear(lens=(160, 8))
+    l1 = LayerSigmoid(lens=(20, 50))
+    l2 = LayerLinear(lens=(50, 8))
     nn = NeuralNetwork(l1, l2)
-    # nn = NeuralNetwork.load('l5.nn')
 
-    learn_x = np.array([[0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
-                        [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-                        [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
-                        [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
-                        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                        [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                        [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]])
+    learn_x = np.array(
+        [
+            [0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+            [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
+        ]
+    )
     learn_e = np.eye(8)
+    times = 2_000
+    sep = 1_000
+    print(f"- Learning {times} times -")
 
-    for thousand in range(100):
-        for _ in range(999):
-            nn.learn(noise(learn_x), learn_e).sum()
-        print(f'{thousand + 1},000 error: {nn.learn(noise(learn_x), learn_e).sum()}')
+    start_time = time.time()
 
-    # for i in range(8):
-    #     print(f'[{i}]: {nn.go(learn_x[i]).argmax()}')
+    for thousand in range(times // sep):
+        for _ in range(sep - 1):
+            nn.learn(noise(learn_x), learn_e)
+        print(
+            f"{thousand + 1 : 3},000 error: {nn.learn(noise(learn_x), learn_e).sum()}"
+        )
 
-    print('Глубокая проверка:')
+    print(f"- Learning time: {time.time() - start_time} seconds -")
+
+    print(
+        "Глубокая проверка с заменой каждого бита\n"
+        "[i]:orgnl|  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19"
+    )
     correct_amount = 0
     for i in range(8):
         row = learn_x[i]
-        print(f'[{i}]: {answer(nn.go(learn_x[i]))} | ', end='')
+        out = (nn.go(row)).argmax()
+        print(f"[{i}]:  {out}  |  ", end="")
+        if out == i:
+            correct_amount += 1
+
         for j in range(20):
-            out = answer(nn.go(noise_j(row, j)))
+            out = (nn.go(noise_j(row, j))).argmax()
             if out == i:
                 correct_amount += 1
-            print(out, end=' ')
+            print(out, end="  ")
         print()
-    print(f'Правильно {correct_amount} / 160: {correct_amount / 1.6 : .1f}%')
-
-    nn.save('l5.nn')
+    print(f"Правильно {correct_amount} / 168: {correct_amount / 1.68 : .1f}%")
 
 
-if __name__ == '__main__':
-    repeat_func(main)
+if __name__ == "__main__":
+    # repeat_func(main)
+    main()
