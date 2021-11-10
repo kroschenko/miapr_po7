@@ -34,7 +34,7 @@ def main():
         ]
     )
     learn_e = np.eye(8)
-    times = 2_000
+    times = 20_000
     sep = 1_000
     print(f"- Learning {times} times -")
 
