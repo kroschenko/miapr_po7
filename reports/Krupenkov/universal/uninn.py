@@ -1,4 +1,6 @@
+import os
 import pickle
+
 import numpy as np
 import funsact
 from numpy.typing import NDArray
@@ -154,8 +156,9 @@ class NeuralNetwork:
         if ans and (ans[0] == "y" or ans[0] == "н"):
             if filename is None:
                 filename = input("Имя файла (*.nn): ") + ".nn"
-
             filename = "nn_files/" + filename
+            if not os.path.exists("nn_files"):
+                os.mkdir("nn_files")
             with open(filename, "wb") as file:
                 pickle.dump(self, file)
             print("Сохранено в", filename)
@@ -167,9 +170,12 @@ class NeuralNetwork:
         if filename is None:
             filename = input("Имя файла (*.nn): ") + ".nn"
         filename = "nn_files/" + filename
-        with open(filename, "rb") as file:
-            new_nn: NeuralNetwork = pickle.load(file)
-        return new_nn
+        if os.path.exists(filename):
+            with open(filename, "rb") as file:
+                new_nn: NeuralNetwork = pickle.load(file)
+            return new_nn
+        else:
+            raise FileNotFoundError
 
 
 class LayerSigmoid(Layer):

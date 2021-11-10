@@ -1,6 +1,6 @@
 from uninn import *
 import time
-# from lab3u import repeat_func
+from lab3u import repeat_func
 
 
 def noise(arr: np.ndarray) -> np.ndarray:
