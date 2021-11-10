@@ -137,7 +137,7 @@ class NeuralNetwork:
             self.layers[0].back_propagation(error, alpha, is_first_layer=True)
         return square_error / self.layers[-1].lens[1]
 
-    def prediction_results_table(self, x: NDArray, e: NDArray) -> None:
+    def prediction_results_table(self, x: NDArray[NDArray], e: NDArray[NDArray]) -> None:
         """Красивый вывод прогона тестирующей выборки"""
         print(
             "                эталон        выходное значение                  разница         среднекв. ошибка"
