@@ -1,6 +1,5 @@
 from uninn import *
 import time
-from lab3u import repeat_func
 
 
 def noise(arr: np.ndarray) -> np.ndarray:
@@ -34,30 +33,29 @@ def main():
         ]
     )
     learn_e = np.eye(8)
-    times = 20_000
-    sep = 1_000
-    print(f"- Learning {times} times -")
+    times = 2
+    sep = 1000
+    print(f"- Learning {times * sep} times -")
 
     start_time = time.time()
 
-    for thousand in range(times // sep):
+    for thousand in range(times):
         for _ in range(sep - 1):
             nn.learn(noise(learn_x), learn_e)
-        print(
-            f"{thousand + 1 : 3},000 error: {nn.learn(noise(learn_x), learn_e).sum()}"
-        )
+        error = nn.learn(noise(learn_x), learn_e).sum()
+        print(f"{thousand + 1 : 5d}x{sep} error: {error : .5e}")
 
     print(f"- Learning time: {time.time() - start_time} seconds -")
 
     print(
-        "Глубокая проверка с заменой каждого бита\n"
-        "[i]:orgnl|  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19"
+        "\nГлубокая проверка с заменой битов №"
+        "\n[i]: - | 0 1 2 3 ..."
     )
     correct_amount = 0
     for i in range(8):
         row = learn_x[i]
         out = (nn.go(row)).argmax()
-        print(f"[{i}]:  {out}  |  ", end="")
+        print(f"[{i}]: {out} | ", end="")
         if out == i:
             correct_amount += 1
 
@@ -65,11 +63,10 @@ def main():
             out = (nn.go(noise_j(row, j))).argmax()
             if out == i:
                 correct_amount += 1
-            print(out, end="  ")
+            print(out, end=" ")
         print()
     print(f"Правильно {correct_amount} / 168: {correct_amount / 1.68 : .1f}%")
 
 
 if __name__ == "__main__":
-    # repeat_func(main)
     main()

@@ -1,6 +1,5 @@
 import os
 import pickle
-
 import numpy as np
 import funsact
 from numpy.typing import NDArray

@@ -1,6 +1,6 @@
 from uninn import *
 import time
-from lab3u import function_lab3_9, repeat_func
+from lab3u import function_lab3_9
 
 
 def main():
@@ -10,16 +10,17 @@ def main():
 
     learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
-    times = 30_000
-    sep = 1_000
-    print(f"- Learning {times} times -")
+    times = 30
+    sep = 1000
+    print(f"- Learning {times * sep} times -")
 
     start_time = time.time()
 
-    for thousand in range(times // sep):
+    for thousand in range(times):
         for _ in range(sep - 1):
             nn.learn(learn_x, learn_e)
-        print(f"{thousand + 1 : 3},000 error: {nn.learn(learn_x, learn_e)}")
+        error = nn.learn(learn_x, learn_e)[0]
+        print(f"{thousand + 1 : 5d}x{sep} error: {error : .5e}")
 
     print(f"- Learning time: {time.time() - start_time} seconds -")
 
@@ -27,5 +28,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # repeat_func(main)
     main()
