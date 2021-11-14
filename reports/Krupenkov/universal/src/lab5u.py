@@ -4,36 +4,32 @@ import time
 
 def noise(arr: np.ndarray) -> np.ndarray:
     for i in range(len(arr)):
-        if np.random.randint(20) < 1:
-            j = np.random.randint(20)
-            arr[i][j] = 1 - arr[i][j]
+        j = np.random.randint(20)
+        arr[i][j] ^= 1
     return arr
 
 
 def noise_j(arr: np.ndarray, j) -> np.ndarray:
-    arr[j] = 1 - arr[j]
+    arr[j] ^= 1
     return arr
 
 
 def main():
-    l1 = LayerSigmoid(lens=(20, 50))
-    l2 = LayerLinear(lens=(50, 8))
-    nn = NeuralNetwork(l1, l2)
+    nn = NeuralNetwork(
+        LayerSigmoid(lens=(20, 50)),
+        LayerLinear(lens=(50, 3))
+    )
 
     learn_x = np.array(
         [
-            [0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
             [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-            [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
             [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
-            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1]
         ]
     )
-    learn_e = np.eye(8)
-    times = 2
+    learn_e = np.eye(3)
+
+    times = 100
     sep = 1000
     print(f"- Learning {times * sep} times -")
 
@@ -43,7 +39,7 @@ def main():
         for _ in range(sep - 1):
             nn.learn(noise(learn_x), learn_e)
         error = nn.learn(noise(learn_x), learn_e).sum()
-        print(f"{thousand + 1 : 5d}x{sep} error: {error : .5e}")
+        print(f"{thousand + 1 : 5d}/{times} x{sep} error: {error : .5e}")
 
     print(f"- Learning time: {time.time() - start_time} seconds -")
 
@@ -52,7 +48,7 @@ def main():
         "\n[i]: - | 0 1 2 3 ..."
     )
     correct_amount = 0
-    for i in range(8):
+    for i in range(3):
         row = learn_x[i]
         out = (nn.go(row)).argmax()
         print(f"[{i}]: {out} | ", end="")
@@ -65,7 +61,7 @@ def main():
                 correct_amount += 1
             print(out, end=" ")
         print()
-    print(f"Правильно {correct_amount} / 168: {correct_amount / 1.68 : .1f}%")
+    print(f"Правильно {correct_amount} / 63: {correct_amount / 0.63 : .1f}%")
 
 
 if __name__ == "__main__":

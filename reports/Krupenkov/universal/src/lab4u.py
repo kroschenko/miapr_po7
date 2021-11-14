@@ -4,13 +4,14 @@ from lab3u import function_lab3_9
 
 
 def main():
-    l1 = LayerSigmoid(lens=(10, 4))
-    l2 = LayerLinear(lens=(4, 1))
-    nn = NeuralNetwork(l1, l2)
+    nn = NeuralNetwork(
+        LayerSigmoid(lens=(10, 4)),
+        LayerLinear(lens=(4, 1))
+    )
 
     learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
-    times = 30
+    times = 50
     sep = 1000
     print(f"- Learning {times * sep} times -")
 

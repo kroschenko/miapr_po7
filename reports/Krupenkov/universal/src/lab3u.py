@@ -7,14 +7,15 @@ def function_lab3_9(x):
 
 
 def main():
-    l1 = Layer(lens=(10, 4), f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid)
-    l2 = Layer(lens=(4, 1))
-    nn = NeuralNetwork(l1, l2)
+    nn = NeuralNetwork(
+        Layer(lens=(10, 4), f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid),
+        Layer(lens=(4, 1))
+    )
 
     learn_x, learn_e = predict_set(0, 10, 30, 0.1, function=function_lab3_9)
     test_x, test_e = predict_set(3, 10, 15, 0.1, function=function_lab3_9)
     alpha = 0.05
-    times = 50
+    times = 30
     sep = 1000
     print(f"- Learning {times * sep} times -")
 

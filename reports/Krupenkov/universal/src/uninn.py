@@ -6,53 +6,16 @@ from numpy.typing import NDArray
 from typing import Optional, Callable
 
 
-def predict_set(
-    begin: float,
-    lenght: float,
-    count: int,
-    step: float,
-    function: Optional[Callable] = None,
-) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
-    """Набор обучающей выборки типа:
-
-    x = [ [1 2 3] [2 3 4] [3 4 5] ]
-    e = [4 5 6]\n"""
-    base_array = np.arange(count + lenght, dtype=np.double)
-    x = np.zeros(shape=(count, lenght), dtype=np.double)
-    for i in range(count):
-        x[i] = base_array[i : lenght + i]
-    e = base_array[lenght : lenght + count].reshape(-1, 1)
-
-    x = x * step + begin
-    e = e * step + begin
-    if function is None:
-        return x, e
-    else:
-        return function(x), function(e)
-
-
-def shuffle_set(
-    x: NDArray[NDArray], e: NDArray[NDArray]
-) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
-    """Перемешивание набора обучающей выборки"""
-    randomize = np.arange(len(x))
-    np.random.shuffle(randomize)
-    x = x[randomize]
-    e = e[randomize]
-    return x, e
-
-
 class Layer:
     """Слой нейросети"""
 
     def __init__(
-        self,
-        lens: tuple[int, int],
-        f_act: Callable = funsact.linear,
-        d_f_act: Callable = funsact.d_linear,
-        w=None,
-        t=None,
-        is_vectorize=False,
+            self,
+            lens: tuple[int, int],
+            f_act: Callable = funsact.linear,
+            d_f_act: Callable = funsact.d_linear,
+            w=None, t=None,
+            is_need_vectorize=False
     ):
         """
         - lens (количество нейронов этого и следующего слоя)
@@ -61,7 +24,7 @@ class Layer:
         self.lens = lens
         self.w = np.random.uniform(-0.5, 0.5, lens) if w is None else w
         self.t = np.random.uniform(-0.5, 0.5, lens[1]) if t is None else t
-        if is_vectorize:
+        if is_need_vectorize:
             self.f_act = np.vectorize(f_act)
             self.d_f_act = np.vectorize(d_f_act)
         else:
@@ -76,7 +39,10 @@ class Layer:
         return self.y
 
     def back_propagation(
-        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+            self,
+            error: NDArray,
+            alpha: Optional[float],
+            is_first_layer=False
     ) -> Optional[NDArray]:
         """Обратное распространение ошибки с изменением весов, порога"""
         error_later = (
@@ -98,10 +64,10 @@ class Layer:
         if not hasattr(self, "d_f_act_0"):
             self.d_f_act_0 = self.d_f_act(self.f_act(0))
         alpha = (
-            (error ** 2 * self.d_f_act(self.y)).sum()
-            / self.d_f_act_0
-            / (1 + (self.y ** 2).sum())
-            / ((error * self.d_f_act(self.y)) ** 2).sum()
+                (error ** 2 * self.d_f_act(self.y)).sum()
+                / self.d_f_act_0
+                / (1 + (self.x ** 2).sum())
+                / ((error * self.d_f_act(self.y)) ** 2).sum()
         )
         return alpha
 
@@ -110,6 +76,7 @@ class NeuralNetwork:
     def __init__(self, *args: Layer) -> None:
         """Создание нейросети с заданием массива слоев"""
         self.layers = args
+        self.back_propagation_range = range(len(self.layers) - 1, 0, -1)
 
     def go(self, x: NDArray) -> NDArray:
         """Прохождение всех слоев нейросети"""
@@ -118,12 +85,15 @@ class NeuralNetwork:
         return x
 
     def learn(
-        self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None
+            self,
+            x: NDArray[NDArray],
+            e: NDArray[NDArray],
+            alpha: Optional[float] = None
     ) -> NDArray:
-        """Обучение набором обучающей выборки
+        """Обучение наборами обучающих выборок
 
-        - x: (n, len) ... [[1 2] [2 3]]
-        - e: (len,) ....... [3 4]
+        - x: (n, len_in) ... [[1 2] [2 3]]
+        - e: (n, len_out) ....... [[3] [4]]
         """
 
         square_error = np.zeros(self.layers[-1].lens[1])
@@ -131,8 +101,8 @@ class NeuralNetwork:
             y: NDArray = self.go(x[i])
             error: NDArray = y - e[i]
             square_error += error ** 2 / 2
-            for layer in self.layers[:0:-1]:
-                error = layer.back_propagation(error, alpha)
+            for layer_i in self.back_propagation_range:
+                error = self.layers[layer_i].back_propagation(error, alpha)
             self.layers[0].back_propagation(error, alpha, is_first_layer=True)
         return square_error / self.layers[-1].lens[1]
 
@@ -150,31 +120,32 @@ class NeuralNetwork:
             print(f"{e[i] : 22}{y[i] : 25}{delta[i] : 25}{square_error[i] : 25}")
         print(f"\n-- Final testing square error: {np.average(square_error) * 2} --")
 
-    def save(self, filename=None) -> None:
-        ans = input("Желаете сохранить? (y/n): ")
-        if ans and (ans[0] == "y" or ans[0] == "н"):
-            if filename is None:
-                filename = input("Имя файла (*.nn): ") + ".nn"
-            filename = "nn_files/" + filename
-            if not os.path.exists("nn_files"):
-                os.mkdir("nn_files")
-            with open(filename, "wb") as file:
-                pickle.dump(self, file)
-            print("Сохранено в", filename)
-        else:
-            print("Сохранение отклонено")
 
-    @staticmethod
-    def load(filename=None):
+def save(nn: NeuralNetwork, filename=None) -> None:
+    ans = input("Желаете сохранить? (y/n): ")
+    if ans and (ans[0] == "y" or ans[0] == "н"):
         if filename is None:
             filename = input("Имя файла (*.nn): ") + ".nn"
         filename = "nn_files/" + filename
-        if os.path.exists(filename):
-            with open(filename, "rb") as file:
-                new_nn: NeuralNetwork = pickle.load(file)
-            return new_nn
-        else:
-            raise FileNotFoundError
+        if not os.path.exists("nn_files"):
+            os.mkdir("nn_files")
+        with open(filename, "wb") as file:
+            pickle.dump(nn, file)
+        print("Сохранено в", filename)
+    else:
+        print("Сохранение отклонено")
+
+
+def load(filename=None) -> NeuralNetwork:
+    if filename is None:
+        filename = input("Имя файла (*.nn): ") + ".nn"
+    filename = "nn_files/" + filename
+    if os.path.exists(filename):
+        with open(filename, "rb") as file:
+            new_nn: NeuralNetwork = pickle.load(file)
+        return new_nn
+    else:
+        raise FileNotFoundError
 
 
 class LayerSigmoid(Layer):
@@ -185,7 +156,9 @@ class LayerSigmoid(Layer):
         super().__init__(lens, f_act=funsact.sigmoid, d_f_act=funsact.d_sigmoid)
 
     def back_propagation(
-        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+            self, error: NDArray,
+            alpha: Optional[float],
+            is_first_layer=False
     ) -> Optional[NDArray]:
         """Обратное распространение ошибки с изменением весов, порога"""
         error_later = (
@@ -205,10 +178,10 @@ class LayerSigmoid(Layer):
 
     def adaptive_alpha(self, error) -> float:
         alpha = (
-            4
-            * (error ** 2 * self.y * (1 - self.y)).sum()
-            / (1 + (self.x ** 2).sum())
-            / np.square(error * self.y * (1 - self.y)).sum()
+                4
+                * (error ** 2 * self.y * (1 - self.y)).sum()
+                / (1 + (self.x ** 2).sum())
+                / np.square(error * self.y * (1 - self.y)).sum()
         )
         return alpha
 
@@ -221,7 +194,9 @@ class LayerLinear(Layer):
         super().__init__(lens, funsact.linear, funsact.d_linear)
 
     def back_propagation(
-        self, error: NDArray, alpha: Optional[float], is_first_layer=False
+            self, error: NDArray,
+            alpha: Optional[float],
+            is_first_layer=False
     ) -> Optional[NDArray]:
         """Обратное распространение ошибки с изменением весов, порога"""
         error_later = np.dot(error, self.w.transpose()) if not is_first_layer else None
@@ -237,5 +212,43 @@ class LayerLinear(Layer):
 
     def adaptive_alpha(self, error) -> float:
         alpha = 1 / (1 + np.square(self.x).sum())
-        # alpha = (error ** 2).sum() / (1 + (self.y ** 2).sum()) / error.sum()
+        # alpha = np.square(error).sum() / (1 + np.square(self.x).sum()) / error.sum()
         return alpha
+
+
+def predict_set(
+        begin: float,
+        lenght: float,
+        count: int,
+        step: float,
+        function: Optional[Callable] = None
+) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
+    """Набор обучающей выборки типа:
+
+    x = [ [1 2 3] [2 3 4] [3 4 5] ]\n
+    e = [ [4] [5] [6] ]"""
+
+    base_array = np.arange(count + lenght)
+    x = np.zeros(shape=(count, lenght))
+    for i in range(count):
+        x[i] = base_array[i: lenght + i]
+    e = base_array[lenght: lenght + count].reshape(-1, 1)
+
+    x = x * step + begin
+    e = e * step + begin
+    if function is None:
+        return x, e
+    else:
+        return function(x), function(e)
+
+
+def shuffle_set(
+        x: NDArray[NDArray],
+        e: NDArray[NDArray]
+) -> tuple[NDArray[NDArray], NDArray[NDArray]]:
+    """Перемешивание набора обучающей выборки"""
+    randomize = np.arange(len(x))
+    np.random.shuffle(randomize)
+    x = x[randomize]
+    e = e[randomize]
+    return x, e

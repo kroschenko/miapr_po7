@@ -3,8 +3,8 @@ from lab1u import function_lab1_9
 
 
 def main():
-    l1 = LayerLinear(lens=(5, 1))
-    nn = NeuralNetwork(l1)
+    layer = LayerLinear(lens=(5, 1))
+    nn = NeuralNetwork(layer)
 
     learn_x, learn_e = predict_set(0, 5, 30, 0.1, function=function_lab1_9)
     for t in range(10):
