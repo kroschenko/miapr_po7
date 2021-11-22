@@ -77,21 +77,21 @@ def calculate_T_out(T_out, local_error):
 def main():
     epoch = 0
     sum_error = 1
-    T_out = [0 for _ in range(hidden_neuron)]
-    T_k = 0
+    T_hidden = [0 for _ in range(hidden_neuron)]
+    T_out= 0
     while sum_error > min_error:
         for k in range(30):
             y_hidden = []
             y_out, sum_error = 0, 0
             y_ideal = ideal_value(k)
             for i in range(hidden_neuron):
-                y_hidden.append(sigmoid_function(i, y_ideal, T_out))
-            y_out = calculate_S_out(y_hidden, T_k)
+                y_hidden.append(sigmoid_function(i, y_ideal, T_hidden))
+            y_out = calculate_S_out(y_hidden, T_out)
             local_error = y_out - y_ideal[0]
             Wjk_change(y_hidden, local_error)
             Wij_change(y_hidden, local_error, y_ideal)
-            calculate_T_hidden(T_out, y_hidden, local_error)
-            calculate_T_out(T_k, local_error)
+            calculate_T_hidden(T_hidden, y_hidden, local_error)
+            calculate_T_out(T_out, local_error)
             sum_error += 0.5 * (local_error ** 2)
         epoch += 1
         print(f'Number epoch:{epoch}:{local_error}')
@@ -105,12 +105,12 @@ def main():
         y_out_test, sum_error_ = 0, 0
         y_ideal_test = ideal_value(i)
         for j in range(hidden_neuron):
-            y_hidden_test.append(sigmoid_function(j, y_ideal_test, T_out))
-        y_out_test = calculate_S_out(y_hidden_test, T_k)
+            y_hidden_test.append(sigmoid_function(j, y_ideal_test, T_hidden))
+        y_out_test = calculate_S_out(y_hidden_test, T_out)
         local_error_ = y_out_test - y_ideal_test[-1]
         sum_error_ += 0.5 * (local_error_ ** 2)
-        calculate_T_hidden(T_out, y_hidden_test, local_error)
-        calculate_T_out(T_k, local_error)
+        calculate_T_hidden(T_hidden, y_hidden_test, local_error)
+        calculate_T_out(T_out, local_error)
 
         print(f"{y_ideal_test[-1]:<29} {y_out_test:<29} {local_error_}")
 
