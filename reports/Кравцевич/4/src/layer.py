@@ -4,7 +4,6 @@ import random
 class Layer:
 
 	def __init__(self, input_sample_size: int, next_layer_size: int, activation_func):
-		self.step = 1
 		self.weights = []
 		self.T = []
 		self.errors = []
