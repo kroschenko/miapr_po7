@@ -21,8 +21,8 @@ vectors_code = [
     [0, 0, 0, 0, 0, 0, 1, 0],
     [0, 0, 0, 0, 0, 0, 0, 1]
 ]
-x_list = [vectors[0], vectors[1], vectors[2]]
-e_list = [vectors_code[0], vectors_code[1], vectors_code[2]]
+x_list = [vectors[0], vectors[5], vectors[7]]
+e_list = [vectors_code[0], vectors_code[5], vectors_code[7]]
 Wki = [[r() for i in range(20)], [r() for i in range(20)]]
 Wij = [[r() for i in range(8)], [r() for i in range(8)]]
 Ti = [r() for i in range(2)]
@@ -53,38 +53,42 @@ def O_Calc(x_list, Wki, Wij, Ti, Tj, model):
     return S
 
 
-def Errs_calc(e_list, res, h_res):
+def Errs_calc(e_list, res):
     Errs = [[], []]
     Errsum = 0
     for i in range(8):
         Errs[0].append(res[i] - e_list[i])
     for i in range(2):
         for k in range(8):
-            Errsum += Errs[0][k] * der_sigm(h_res[i]) * Wij[i][k]
+            Errsum += Errs[0][k] * Wij[i][k]
         Errs[1].append(Errsum)
         Errsum = 0
     return Errs
 
 
-for Age in range(100):
+for Age in range(10000):
     for model in range(3):
         res = O_Calc(x_list, Wki, Wij, Ti, Tj, model)
         h_res = [H_Calc(x_list, Wki, Ti, 0, model), H_Calc(x_list, Wki, Ti, 1, model)]
-        Errs = Errs_calc(e_list[model], res, h_res)
+        Errs = Errs_calc(e_list[model], res)
+
         for i in range(2):
             for k in range(20):
-                Wki[i][k] = Wki[i][k] - ls * Errs[1][i] * der_sigm(h_res[i]) * h_res[i]
+                Wki[i][k] = Wki[i][k] - ls * Errs[1][i] * der_sigm(h_res[i]) * x_list[model][k]
         for i in range(2):
             Ti[i] = Ti[i] + ls * Errs[1][i] * der_sigm(h_res[i])
+
         for i in range(2):
             for k in range(8):
-                Wij[i][k] = Wij[i][k] - ls * Errs[0][k] * res[k]
+                Wij[i][k] = Wij[i][k] - ls * Errs[0][k] * h_res[i]
         for i in range(8):
             Tj[i] = Tj[i] + ls * Errs[0][i] * res[i]
+
         for i in range(8):
             MSE += Errs[0][i] ** 2
-    print(MSE)
     MSE = 0
-print(O_Calc(vectors, Wki, Wij, Ti, Tj, 0), " = ", vectors_code[0])
-print(O_Calc(vectors, Wki, Wij, Ti, Tj, 1), " = ", vectors_code[1])
-print(O_Calc(vectors, Wki, Wij, Ti, Tj, 2), " = ", vectors_code[2])
+inp_vector = [[0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1]]
+print("Input:", inp_vector)
+result = O_Calc(inp_vector, Wki, Wij, Ti, Tj, 0)
+for i in range(8):
+    print(i, ":", round(result[i], 2)*100, "%")
