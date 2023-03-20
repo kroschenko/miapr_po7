@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Кирилл",
+      "email": "lobanProduction@gmail.com"
+    },
+    {
+      "id": "2",
+      "name": "Рома",
+      "email": "romanchick@gmail.com"
+    },
+    {
+      "id": "3",
+      "name": "Илья",
+      "email": "ilia@gmail.com"
+    },
+    {
+      "id": "4",
+      "name": "Вика",
+      "email": "xyz@gmail.com"
+    }
+  ]
+}
